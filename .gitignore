@@ -1,0 +1,8 @@
+**/desktop.ini
+v0_zip/
+HOLD/
+.vscode/
+__pycache__/
+output_data.csv
+test.py
+*.code-workspace
