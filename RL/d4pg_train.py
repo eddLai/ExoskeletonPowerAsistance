@@ -1,9 +1,7 @@
-#!/usr/bin/env python3
 import os
 import ptan
 import time
-import gym
-# import pybullet_envs
+from wifi_streaming import Env
 import argparse
 from tensorboardX import SummaryWriter
 import numpy as np
@@ -14,8 +12,9 @@ import torch
 import torch.optim as optim
 import torch.nn.functional as F
 
+OBSERVATION_DIMS = 9
+ACTION_DIMS = 2
 
-# ENV_ID = "MinitaurBulletEnv-v0"
 GAMMA = 0.99
 BATCH_SIZE = 64
 LEARNING_RATE = 1e-3
@@ -31,6 +30,7 @@ Vmin = -10
 N_ATOMS = 51
 DELTA_Z = (Vmax - Vmin) / (N_ATOMS - 1)
 
+env = Env.ExoskeletonEnv()
 
 def test_net(net, env, count=10, device="cpu"):
     rewards = 0.0
@@ -105,11 +105,8 @@ if __name__ == "__main__":
     save_path = os.path.join("saves", "d4pg-" + args.name)
     os.makedirs(save_path, exist_ok=True)
 
-    """env = gym.make(ENV_ID)
-    test_env = gym.make(ENV_ID)"""
-
-    act_net = models.DDPGActor("""env.observation_space.shape[0], env.action_space.shape[0]""").to(device)
-    crt_net = models.D4PGCritic("""env.observation_space.shape[0], env.action_space.shape[0]""", N_ATOMS, Vmin, Vmax).to(device)
+    act_net = models.DDPGActor(OBSERVATION_DIMS, ACTION_DIMS).to(device)
+    crt_net = models.D4PGCritic(OBSERVATION_DIMS, ACTION_DIMS, N_ATOMS, Vmin, Vmax).to(device)
     print(act_net)
     print(crt_net)
     tgt_act_net = ptan.agent.TargetNet(act_net)
@@ -117,7 +114,7 @@ if __name__ == "__main__":
 
     writer = SummaryWriter(comment="-d4pg_" + args.name)
     agent = models.AgentDDPG(act_net, device=device)
-    exp_source = ptan.experience.ExperienceSourceFirstLast("env", agent, gamma=GAMMA, steps_count=REWARD_STEPS)
+    exp_source = ptan.experience.ExperienceSourceFirstLast(E, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
     buffer = ptan.experience.ExperienceReplayBuffer(exp_source, buffer_size=REPLAY_SIZE)
     act_opt = optim.SGD(act_net.parameters(), lr=LEARNING_RATE, momentum=MOMENTUM)
     crt_opt = optim.Adam(crt_net.parameters(), lr=LEARNING_RATE)
@@ -177,7 +174,7 @@ if __name__ == "__main__":
 
                 if frame_idx % TEST_ITERS == 0:
                     ts = time.time()
-                    rewards, steps = test_net(act_net, test_env, device=device)
+                    rewards, steps = test_net(act_net, env, device=device)
                     print("Test done in %.2f sec, reward %.3f, steps %d" % (
                         time.time() - ts, rewards, steps))
                     writer.add_scalar("test_reward", rewards, frame_idx)
