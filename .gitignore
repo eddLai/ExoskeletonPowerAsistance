@@ -6,3 +6,5 @@ __pycache__/
 output_data.csv
 test.py
 *.code-workspace
+venv/
+venv_2/

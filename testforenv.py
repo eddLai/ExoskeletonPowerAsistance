@@ -15,7 +15,7 @@ class ExoskeletonEnv(gym.Env):
         self.device = device
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(9,), dtype=np.float32)
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
-        self.writer = SummaryWriter()
+        self.writer = SummaryWriter("runs/Exotest")
         self.data = np.zeros(9)
         self.current_step = 0
         self.client_socket = self.connect_FREEX(host, port)
@@ -76,13 +76,13 @@ class ExoskeletonEnv(gym.Env):
 def main():
     # Create the environment instance
     env = ExoskeletonEnv()
-    observation = env.reset()
-    done = False
-    while not done:
-        now_step = env.current_step
-        sine_angle = np.sin(now_step * 0.1)
-        observation, reward, done, _ = env.step(sine_angle, -sine_angle)
-        env.render()
+    # observation = env.reset()
+    # done = False
+    # while not done:
+    #     now_step = env.current_step
+    #     sine_angle = np.sin(now_step * 0.1)
+    #     observation, reward, done, _ = env.step(sine_angle, -sine_angle)
+    #     env.render()
     
 
 if __name__ == "__main__":
