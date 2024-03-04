@@ -1,9 +1,17 @@
 import socket
 import time
+import random
 
-def FREEX_CMD(client_socket, cmd_str):
-    # Write
-    # cmd_str = f"X A 20 E 1\r\n\0"
+# def FREEX_CMD(client_socket):
+#     # Write
+#     cmd_str = f"X A -5000 A -5000\r\n\0"
+#     cmd_bytes = cmd_str.encode('ascii')
+#     print(f"Sending command: {cmd_str}")
+#     client_socket.sendall(cmd_bytes)
+
+def FREEX_CMD(client_socket, mode1="A", value1="-5000", mode2="A", value2="-5000"):
+    cmd_str = f"X {mode1} {value1} {mode2} {value2}\r\n\0"
+    print(cmd_str)
     cmd_bytes = cmd_str.encode('ascii')
     print(f"Sending command: {cmd_str}")
     client_socket.sendall(cmd_bytes)
@@ -32,7 +40,6 @@ def get_INFO(client_socket):
         print(f"An error occurred: {ex}")
         return ex
 
-
 def analysis(data):
     print("raw data", data)
     result = []
@@ -53,10 +60,17 @@ def display_data(data):
 
 def main():
     client_socket = connect_FREEX()
-    str = input("cmd_str:example X A 20 E 1\r\n\0")
-    FREEX_CMD(client_socket, str)
-    # FREEX_CMD(client_socket, f"X G 1 G 1\r\n\0")
-    client_socket.close()
+    while True: 
+        print(get_INFO(client_socket))
+        time.sleep(0.5)
+        value = random.randint(-5, 5) * 1000
+        FREEX_CMD(client_socket, "A", "0", "C", f"{value}")
+    # str = input("cmd_str:example X A 20 E 1\r\n\0")
+    # for value in range(0, 8000, 1000):
+    #     FREEX_CMD(client_socket, "A", "0", "C", f"{value}")
+    #     time.sleep(0.2)
+    # FREEX_CMD(client_socket, "C", "0", "C", "0")
+    # client_socket.close()
 
 if __name__ == "__main__":
     main()
