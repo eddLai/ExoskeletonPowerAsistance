@@ -4,7 +4,9 @@ HOLD/
 .vscode/
 __pycache__/
 output_data.csv
-test.py
+test*.py
+test*.ipynb
 *.code-workspace
 venv/
 venv_2/
+runs/

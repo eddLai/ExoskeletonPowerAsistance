@@ -3,7 +3,8 @@ from matplotlib.animation import FuncAnimation
 import numpy as np
 from itertools import count
 import queue
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, Event
+import keyboard
 
 class PlotMotorAnimation:
     def __init__(self, data_source, window_width=10):
@@ -35,7 +36,19 @@ class PlotMotorAnimation:
         return self.lines
     
     def update(self, frame):
-        new_data = self.data_source()[:6]
+        if exit_event.is_set():  # Check the flag status
+            self.ani.event_source.stop()
+            plt.close(self.fig)
+            return self.lines
+        try:
+            new_data = self.data_source.get_nowait()  # Change to non-blocking get
+            if new_data is None:  # Check for the exit signal
+                self.running = False
+                plt.close(self.fig)
+                return self.lines
+        except queue.Empty:
+            return self.lines
+
         self.current_step.append(frame)
         if len(self.current_step) > self.window_width:
             self.current_step.pop(0)
@@ -47,7 +60,7 @@ class PlotMotorAnimation:
         for i in  range(3):
             self.axs[i].set_xlim(self.current_step[0], self.current_step[0] + self.window_width)
         return self.lines
-    
+
     def show(self):
         plt.show()
 
@@ -78,7 +91,19 @@ class PlotIMUAnimation:
         return self.lines
     
     def update(self, frame):
-        new_data = self.data_source()[6:]
+        if not exit_event.is_set():  # Check the flag status
+            self.ani.event_source.stop()
+            plt.close(self.fig)
+            return self.lines
+        try:
+            new_data = self.data_source.get_nowait()  # Change to non-blocking get
+            if new_data is None:  # Check for the exit signal
+                self.running = False
+                plt.close(self.fig)
+                return self.lines
+        except queue.Empty:
+            return self.lines
+        
         self.current_step.append(frame)
         if len(self.current_step) > self.window_width:
             self.current_step.pop(0)
@@ -93,6 +118,48 @@ class PlotIMUAnimation:
     
     def show(self):
         plt.show()
+
+def get_data():
+    return np.random.randint(0, 360, 9)
+
+def run_motor_animation(data_queue):
+    motor_animation = PlotMotorAnimation(data_queue, window_width=10)
+    motor_animation.show()
+
+def run_imu_animation(data_queue):
+    imu_animation = PlotIMUAnimation(data_queue, window_width=10)
+    imu_animation.show()
+
+exit_event = Event()
+
+if __name__ == '__main__':
+    motor_data_queue = Queue()
+    imu_data_queue = Queue()
+    motor_plot_process = Process(target=run_motor_animation, args=(motor_data_queue,))
+    imu_plot_process = Process(target=run_imu_animation, args=(imu_data_queue,))
+    motor_plot_process.start()
+    imu_plot_process.start()
+    motor_plot_process.join()
+    imu_plot_process.join()
+
+    try:
+        while True:
+            # 模拟获取数据的过程
+            # 这里应该是你的数据获取逻辑
+            motor_data = get_data()[:6]
+            imu_data = get_data()[6:]
+            motor_data_queue.put(motor_data)
+            imu_data_queue.put(imu_data)
+            if keyboard.is_pressed('q'):
+                exit_event.set()
+                print("Exiting...")
+                break
+    finally:
+        # 确保子进程优雅地退出
+        motor_plot_process.join()
+        imu_plot_process.join()
+        print("All processes have been terminated.")
+
 
 class PlotEMGAnimation:
     def __init__(self, data_source, window_width=10):
@@ -122,22 +189,3 @@ class PlotEMGAnimation:
     
     def show(self):
         plt.show()
-
-def get_data():
-    return np.random.randint(0, 360, 9)
-
-def run_motor_animation():
-    motor_animation = PlotMotorAnimation(get_data, window_width=10)
-    motor_animation.show()
-
-def run_imu_animation():
-    imu_animation = PlotIMUAnimation(get_data, window_width=10)
-    imu_animation.show()
-
-if __name__ == '__main__':
-    motor_process = Process(target=run_motor_animation)
-    imu_process = Process(target=run_imu_animation)
-    motor_process.start()
-    imu_process.start()
-    motor_process.join()
-    imu_process.join()
