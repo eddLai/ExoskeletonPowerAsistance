@@ -13,7 +13,7 @@ def FREEX_CMD(client_socket, mode1="A", value1="-5000", mode2="A", value2="-5000
     cmd_str = f"X {mode1} {value1} {mode2} {value2}\r\n\0"
     print(cmd_str)
     cmd_bytes = cmd_str.encode('ascii')
-    print(f"Sending command: {cmd_str}")
+    # print(f"Sending command: {cmd_str}")
     client_socket.sendall(cmd_bytes)
 
 def connect_FREEX(host='192.168.4.1', port=8080):
@@ -41,7 +41,7 @@ def get_INFO(client_socket):
         return ex
 
 def analysis(data):
-    print("raw data", data)
+    # print("raw data", data)
     result = []
     if data.startswith("X"):
         parts = data[1:].strip().split()

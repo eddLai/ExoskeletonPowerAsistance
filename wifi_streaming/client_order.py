@@ -1,52 +1,63 @@
-import socket
-import torch
+import asyncio
 import numpy as np
+# import keyboard
+# import random
 
-def FREEX_CMD(client_socket, mode1="E", value1="0", mode2="E", value2="0"):
-    # Write, 可能不可以用這種format的方式
-    cmd_str = f"X {mode1} {value1} {mode2} {value2}\r\n"
-    cmd_bytes = cmd_str.encode('ascii')
-    print(f"Sending command: {cmd_str}")
-    client_socket.sendall(cmd_bytes)
-
-def connect_FREEX(host='192.168.4.1', port=8080):
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    try:
-        client_socket.connect((host, port))
-        print(f"Successfully connected to {host}:{port}")
-        return client_socket
-    except socket.error as err:
-        print(f"Failed to connect: {err}")
-        return None
-
-def get_INFO(client_socket):
-    buffer = ''
-    try:
-        while True:
-            data = client_socket.recv(1024).decode('utf-8')
-            if not data:
+def analysis(data):
+    result = []
+    if data.startswith("X"):
+        parts = data[1:].strip().split()
+        count = 0
+        for part in parts:
+            if count == 9:
                 break
-            buffer += data
-            if '\n' in buffer:
-                line, buffer = buffer.split('\n', 1)
-                return line
-    except Exception as ex:
+            clean_part = ''.join(filter(lambda x: x in '0123456789.-', part))
+            if clean_part and clean_part != '-' and not clean_part.endswith('.'):
+                try:
+                    result.append(float(clean_part))
+                    count += 1
+                except ValueError as e:
+                    print(f"Error converting '{clean_part}' to float: {e}")
+                    continue
+        
+        if len(result) == 9:
+            return np.array(result)
+    return np.array([])
+
+
+async def FREEX_CMD(writer, mode1="A", value1="-5000", mode2="A", value2="-5000"):
+    cmd_str = f"X {mode1} {value1} {mode2} {value2}\r\n\0"
+    # print(f"Sending command: {cmd_str}")
+    writer.write(cmd_str.encode('ascii'))
+    await writer.drain()
+
+async def connect_FREEX(host='192.168.4.1', port=8080):
+    reader, writer = await asyncio.open_connection(host, port)
+    print(f"Successfully connected to {host}:{port}")
+    return reader, writer
+
+async def get_INFO(reader):
+    try:
+        data = await reader.readuntil(separator=b'\n')
+        data_str = data.decode('utf-8').strip()
+        # print("raw data: ", data_str)
+        analyzed_data = analysis(data_str)
+        # print("analyzed: ", analyzed_data)
+        return analyzed_data
+    except asyncio.IncompleteReadError as ex:
         print(f"An error occurred: {ex}")
         return None
 
-def analysis(data):
-    result = np.array([])
-    if data.startswith("X"):
-        parts = data[1:].strip().split()
-        if len(parts) == 9:
-            result = np.array([float(part) for part in parts])
-    return result
-
-def send_action_to_exoskeleton_torque(client_socket, action):
-    # 假设动作范围是[-1, 1]，并且映射到电机速度的范围是[-60000, 60000]
-    motor_speed = int(action * 60000)
-    FREEX_CMD(client_socket, 'C', motor_speed[0], 'C', motor_speed[1])
-    return True
+def check_if_safe(limit:int, angle, speed):
+    if angle >= limit and speed > 0 or angle <= -limit and speed < 0 or angle == None:
+        print("ur safe now")
+        return "0"
+    else:
+        return str(speed)
+    
+async def send_action_to_exoskeleton_speed(writer, action):
+    motor_speed = action * 1000
+    await FREEX_CMD(writer, 'C', f"{motor_speed[0]}", 'C', f"{motor_speed[1]}")
 
 def send_action_to_exoskeleton_angle(client_socket, action):
     # 将动作值映射到[-45, 45]度的角度上
@@ -56,15 +67,36 @@ def send_action_to_exoskeleton_angle(client_socket, action):
     FREEX_CMD(client_socket, 'A', motor_angle_1, 'A', motor_angle_2)
     return True
 
-def send_action_to_exoskeleton(client_socket, action, control_type='torque'):
-    if action == "reset":
-        FREEX_CMD(client_socket, "A", 0, "A", 0)
-        return True
-    elif control_type == 'torque':
-        return send_action_to_exoskeleton_torque(client_socket, action)
+async def send_action_to_exoskeleton(writer, action, control_type='torque'):
+    if control_type == 'speed':
+        return await send_action_to_exoskeleton_speed(writer, action)
     elif control_type == 'angle':
-        return send_action_to_exoskeleton_angle(client_socket, action)
+        return await send_action_to_exoskeleton_angle(writer, action)
     else:
         raise ValueError("Unknown control_type specified.")
 
 
+# async def main():
+#     host = '192.168.4.1'
+#     port = 8080
+#     reader, writer = await connect_FREEX(host, port)
+    
+#     try:
+#         while True:
+#             if keyboard.is_pressed('q'):
+#                 print("Exiting...")
+#                 break
+#             observation = await get_INFO(reader)
+#             value = str(random.randint(-5, 5) * 1000)
+#             if len(observation) > 0:
+#                 value = check_if_safe(10, observation[0], value)
+#             await FREEX_CMD(writer, "A", "0", "C", value)
+#             await asyncio.sleep(0.05)
+#     except KeyboardInterrupt:
+#         print("Program terminated by user.")
+#     finally:
+#         writer.close()
+#         await writer.wait_closed()
+
+# if __name__ == "__main__":
+#     asyncio.run(main())

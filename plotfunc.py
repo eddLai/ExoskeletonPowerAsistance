@@ -4,7 +4,17 @@ import numpy as np
 from itertools import count
 import queue
 from multiprocessing import Process, Queue, Event
-import keyboard
+from tkinter import Tk, Button
+
+def create_exit_button():
+    def on_exit():
+        print("Setting exit event")
+        exit_event.set()
+    root = Tk()
+    root.title("Stop the animation")
+    btn = Button(root, text="Exiting", command=on_exit)
+    btn.pack(pady=20)
+    root.mainloop()
 
 class PlotMotorAnimation:
     def __init__(self, data_source, window_width=10):
@@ -91,13 +101,13 @@ class PlotIMUAnimation:
         return self.lines
     
     def update(self, frame):
-        if not exit_event.is_set():  # Check the flag status
+        if exit_event.is_set():
             self.ani.event_source.stop()
             plt.close(self.fig)
             return self.lines
         try:
-            new_data = self.data_source.get_nowait()  # Change to non-blocking get
-            if new_data is None:  # Check for the exit signal
+            new_data = self.data_source.get_nowait()
+            if new_data is None:
                 self.running = False
                 plt.close(self.fig)
                 return self.lines
@@ -133,31 +143,26 @@ def run_imu_animation(data_queue):
 exit_event = Event()
 
 if __name__ == '__main__':
+    exit_button_process = Process(target=create_exit_button)
+    exit_button_process.start()
     motor_data_queue = Queue()
     imu_data_queue = Queue()
     motor_plot_process = Process(target=run_motor_animation, args=(motor_data_queue,))
     imu_plot_process = Process(target=run_imu_animation, args=(imu_data_queue,))
     motor_plot_process.start()
     imu_plot_process.start()
-    motor_plot_process.join()
-    imu_plot_process.join()
 
     try:
-        while True:
-            # 模拟获取数据的过程
-            # 这里应该是你的数据获取逻辑
+        while not exit_event.is_set():
             motor_data = get_data()[:6]
             imu_data = get_data()[6:]
             motor_data_queue.put(motor_data)
             imu_data_queue.put(imu_data)
-            if keyboard.is_pressed('q'):
-                exit_event.set()
-                print("Exiting...")
-                break
+
     finally:
-        # 确保子进程优雅地退出
         motor_plot_process.join()
         imu_plot_process.join()
+        exit_button_process.terminate()
         print("All processes have been terminated.")
 
 
