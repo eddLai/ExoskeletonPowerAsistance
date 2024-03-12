@@ -1,7 +1,7 @@
 import os
 import ptan
 import time
-from wifi_streaming import Env
+from . import Env
 import argparse
 from tensorboardX import SummaryWriter
 import numpy as np

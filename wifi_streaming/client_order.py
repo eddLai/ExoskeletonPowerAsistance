@@ -49,7 +49,10 @@ async def get_INFO(reader):
         return None
 
 def check_if_safe(limit:int, angle, speed):
-    if angle >= limit and speed > 0 or angle <= -limit and speed < 0 or angle == None:
+    if angle is None:
+        print("ur safe now (angle is None)")
+        return "0"
+    elif (angle >= limit and speed <= 0) or (angle <= -limit and speed <= 0):
         print("ur safe now")
         return "0"
     else:
