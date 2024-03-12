@@ -2,6 +2,7 @@ import numpy as np
 from gym import spaces
 import gym
 from wifi_streaming import client_order
+from EMG import emgdata
 from torch.utils.tensorboard import SummaryWriter
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,6 +11,13 @@ import keyboard
 import time
 import asyncio
 import random
+from scipy.signal import butter, lfilter, iirnotch, lfilter_zi
+import asyncio
+import aiohttp
+import websockets
+import json
+from matplotlib.animation import FuncAnimation
+import pandas as pd
 
 '''EXO ENVIRONMENT中統一用observation, 外部統一用state'''
 
@@ -30,14 +38,26 @@ class ExoskeletonEnv(gym.Env):
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(9,), dtype=np.float32)
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
         self.log_writer = SummaryWriter("runs/Env_test")
-
+        # Initialize emg process
+        self.uri = "ws://localhost:31278/ws"
+        self.emg_observation = np.zeros((6,50))
+        self.ft_parameter = np.zeros((6,3))
+        self.initial_max_min_rms_values = np.zeros((6,2))
+        self.times = 0
+        
     async def step(self, action):
         # 改回用send_action_to_exoskeleton_speed函數
         await client_order.FREEX_CMD(self.writer, "C", action[0], "C", action[1])
-        new_observation = await client_order.get_INFO(self.reader)
+        new_observation, new_emg_observation, new_ft_parameter = await client_order.get_INFO(self.reader,self.uri ,self.ft_parameter)
+        
         if new_observation.shape[0] != 0:
             self.observation = new_observation
-        self.reward = self.calculate_reward(self.observation)
+        if new_emg_observation.shape[0] != 0:
+            self.emg_observation = new_emg_observation
+            self.ft_parameter = new_ft_parameter
+            if self.times <= 10000:
+                self.times = self.times + 50  #len(new_emg_observation)
+        self.reward = self.calculate_reward()
         done = self.check_if_done(self.observation)
         self.current_step += 1
         self.render()
@@ -50,11 +70,15 @@ class ExoskeletonEnv(gym.Env):
             await self.writer.wait_closed()
         self.reader, self.writer = await client_order.connect_FREEX(self.host, self.port)
         self.observation = await client_order.get_INFO(self.reader)
+
         return self.observation
 
-    def calculate_reward(self, observation):
+    async def calculate_reward(self):
         # Implement reward calculation
-        return 0.0
+        
+        reward, self.initial_max_min_rms_values = await emgdata.calculate_emg_level(self.emg_observation, self.initial_max_min_rms_values, self.times)
+        
+        return reward
 
     def check_if_done(self, observation):
         # Implement logic to check if the episode is done
@@ -81,7 +105,7 @@ async def main():
             action2 = str(random.randint(-5, 5) * 1000)
             state, reward, done, info = await env.step([action1,action2])
             print(state)
-            await asyncio.sleep(0.05)   
+            await asyncio.sleep(0.05)
     finally:
         env.writer.close()
         await env.writer.wait_closed()

@@ -1,5 +1,13 @@
 import asyncio
 import numpy as np
+from EMG import emgdata
+import numpy as np
+from scipy.signal import butter, lfilter, iirnotch, lfilter_zi
+import asyncio
+import aiohttp
+import websockets
+import json
+import time
 # import keyboard
 # import random
 
@@ -36,14 +44,18 @@ async def connect_FREEX(host='192.168.4.1', port=8080):
     print(f"Successfully connected to {host}:{port}")
     return reader, writer
 
-async def get_INFO(reader):
+async def get_INFO(reader,uri,ft_parameter):
     try:
         data = await reader.readuntil(separator=b'\n')
         data_str = data.decode('utf-8').strip()
         # print("raw data: ", data_str)
         analyzed_data = analysis(data_str)
         # print("analyzed: ", analyzed_data)
-        return analyzed_data
+
+        # emg
+        emg_observation, ft_parameter = await emgdata.read_specific_data_from_websocket(uri ,ft_parameter)
+        return analyzed_data, emg_observation, ft_parameter
+    
     except asyncio.IncompleteReadError as ex:
         print(f"An error occurred: {ex}")
         return None
