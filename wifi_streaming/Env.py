@@ -72,13 +72,13 @@ class ExoskeletonEnv2(gym.Env):
     metadata = {'render.modes': ['human']}
 
     def __init__(self, device='cpu', host='192.168.4.1', url= "ws://localhost:31278/ws", port=8080):
-        super(ExoskeletonEnv, self).__init__()
+        super(ExoskeletonEnv2, self).__init__()
         self.device = device
         self.host = host
         self.port = port
         self.uri = url
         self.observation = np.zeros(9)
-        self.emg_observation = np.zeros((6,50))
+        self.emg_observation = np.zeros((6))
         self.ft_parameter = np.zeros((6,3))
         self.initial_max_min_rms_values = np.zeros((6,2))
         self.current_step = 0
@@ -96,12 +96,12 @@ class ExoskeletonEnv2(gym.Env):
     async def async_step(self, action):
         # 改回用send_action_to_exoskeleton_speed函數
         # await client_order.FREEX_CMD(self.writer, "C", action[0], "C", action[1])
-        new_observation, new_emg_observation, new_ft_parameter = await client_order.get_INFO(self.reader,self.uri ,self.ft_parameter)
+        new_observation, new_emg_observation, new_ft_parameter = await client_order.get_INFO(self.reader, self.uri ,self.ft_parameter)
         
         if new_observation.shape[0] != 0:
             self.observation = new_observation
         if new_emg_observation.shape[0] != 0:
-            self.emg_observation = new_emg_observation
+            self.emg_observation = np.sqrt(np.mean(new_emg_observation**2, axis=1))
             self.ft_parameter = new_ft_parameter
             if self.init_time <= 10000:
                 self.init_time = self.init_time + 50  #len(new_emg_observation)
@@ -109,7 +109,7 @@ class ExoskeletonEnv2(gym.Env):
         done = self.check_if_done(self.observation)
         self.current_step += 1
         self.render()
-        return [self.observation, self.emg_observation], self.reward, done, {}
+        return np.concatenate(self.observation, self.emg_observation), self.reward, done, {}
     
     def reset(self):
         return asyncio.run(self.async_reset())
@@ -118,10 +118,11 @@ class ExoskeletonEnv2(gym.Env):
         if self.writer is not None:
             self.writer.close()
             await self.writer.wait_closed()
-        self.reader, self.writer = await client_order.connect_FREEX(self.host, self.port)
-        self.observation = await client_order.get_INFO(self.reader)
+        # self.reader, self.writer = await client_order.connect_FREEX(self.host, self.port)
+        # self.observation, self.emg_observation, self.ft_parameter = await client_order.get_INFO(self.reader, self.uri, self.ft_parameter)
 
-        return self.observation
+        # return np.concatenate(self.observation, self.emg_observation)
+        return np.zeros(15)
 
     async def calculate_reward(self):
         reward, self.initial_max_min_rms_values = await emgdata.calculate_emg_level(self.emg_observation, self.initial_max_min_rms_values, self.init_time)
@@ -138,5 +139,4 @@ class ExoskeletonEnv2(gym.Env):
         self.log_writer.add_scalars('IMU', {'Roll': self.observation[6], 'Pitch': self.observation[7], 'Yaw':self.observation[8]}, self.current_step)
         self.log_writer.add_scalar('Reward', self.reward, self.current_step)
         for i in range(self.emg_observation.shape[0]):
-            channel_mean = np.mean(self.emg_observation[i, :])
-            self.log_writer.add_scalar(f'EMG/Channel_{i+1}', channel_mean, self.current_step)
+            self.log_writer.add_scalar(f'EMG/Channel_{i+1}', self.emg_observation[i], self.current_step)
