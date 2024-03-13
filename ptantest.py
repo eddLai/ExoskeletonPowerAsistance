@@ -1,5 +1,6 @@
 import ptan
 from wifi_streaming import Env
+from EMG import emgdata
 import torch
 
 class DummyAgent(ptan.agent.BaseAgent):
@@ -23,7 +24,7 @@ class DummyNet(torch.nn.Module):
         return torch.zeros(1)
 
 if __name__ == "__main__":
-    env = Env.ExoskeletonEnv("CUDA", "ptantest")
+    env = Env.ExoskeletonEnv2("CUDA", "ptantest")
     writer = env.log_writer
     agent = DummyAgent(action_dims=2)
     dummy_net = DummyNet()

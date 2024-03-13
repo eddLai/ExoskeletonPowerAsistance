@@ -85,16 +85,12 @@ def lowpass_filter(data, cutoff, fs, lp_filter_state, order=4):
 
 # 实时信号处理函数
 async def process_emg_signal(data, ft_parameter, fs=1000):
-    
     # 带通滤波
     bandpassed, ft_parameter[0] = bandpass_filter(data, 20, 450, fs, ft_parameter[0])
-    
     # 50Hz陷波滤波
     notch_filtered, ft_parameter[1] = notch_filter(bandpassed, 50, fs, ft_parameter[1])
-    
     # 全波整流
     rectified = full_wave_rectification(notch_filtered)
-    
     # 低通滤波提取包络
     enveloped, ft_parameter[2] = lowpass_filter(rectified, 10, fs, ft_parameter[2])
 
