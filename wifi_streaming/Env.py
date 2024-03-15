@@ -118,10 +118,11 @@ class ExoskeletonEnv2(gym.Env):
         if self.writer is not None:
             self.writer.close()
             await self.writer.wait_closed()
-        self.reader, self.writer = await client_order.connect_FREEX(self.host, self.port)
+        # self.reader, self.writer = await client_order.connect_FREEX(self.host, self.port)
         self.observation, self.emg_observation, self.ft_parameter = await client_order.get_INFO(self.reader, self.uri, self.ft_parameter)
 
         return np.concatenate(self.observation, self.emg_observation)
+        # return np.zeros(15)
 
     async def calculate_reward(self):
         reward, self.initial_max_min_rms_values = await emgdata.calculate_emg_level(self.emg_observation, self.initial_max_min_rms_values, self.init_time)
