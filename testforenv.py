@@ -18,6 +18,7 @@ import websockets
 import json
 from matplotlib.animation import FuncAnimation
 import pandas as pd
+from wifi_streaming import Env
 
 '''EXO ENVIRONMENT中統一用observation, 外部統一用state'''
 
@@ -93,8 +94,8 @@ class ExoskeletonEnv(gym.Env):
     
 async def main():
     try:
-        env = ExoskeletonEnv(device='cuda')
-        await env.reset()
+        env = Env.ExoskeletonEnv2(device='cuda', save_path="runs/testforenv")
+        # await env.reset()
         done = False
         while not done:
             if keyboard.is_pressed('q'):
@@ -107,8 +108,9 @@ async def main():
             print(state)
             await asyncio.sleep(0.05)
     finally:
-        env.writer.close()
-        await env.writer.wait_closed()
+        pass
+        # env.writer.close()
+        # await env.writer.wait_closed()
 
 if __name__ == "__main__":
     asyncio.run(main())
