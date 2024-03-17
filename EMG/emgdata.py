@@ -17,6 +17,10 @@ async def read_specific_data_from_websocket(uri,ft_parameter):
         async with websockets.connect(uri) as websocket:
             data = await websocket.recv()
             emg_array, ft_parameter = await process_data_from_websocket(data,ft_parameter)
+            print(type(emg_array))
+            print(emg_array)
+            print(type(ft_parameter))
+            print(ft_parameter)
             return emg_array, ft_parameter
     except Exception as e:
          print(f"WebSocket error: {e}")

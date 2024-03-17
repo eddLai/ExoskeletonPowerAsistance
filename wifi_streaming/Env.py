@@ -89,7 +89,7 @@ class ExoskeletonEnv2(gym.Env):
         self.writer = None
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(15,), dtype=np.float32)
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
-        self.log_writer = SummaryWriter(save_path)
+        # self.log_writer = SummaryWriter(save_path)
         
     async def step(self, action):
         return await asyncio.run(self.async_step(action))
@@ -108,7 +108,7 @@ class ExoskeletonEnv2(gym.Env):
         self.reward = self.calculate_reward()
         done = self.check_if_done(self.observation)
         self.current_step += 1
-        self.render()
+        # self.render()
         return np.concatenate(self.observation, self.emg_observation), self.reward, done, {}
     
     def reset(self):
