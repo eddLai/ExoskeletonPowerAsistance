@@ -13,29 +13,24 @@ import pandas as pd
 # stop_event = asyncio.Event()  # 控制无限循环的停止
 
 async def read_specific_data_from_websocket(uri, bp_parameter, nt_parameter, lp_parameter, max_retries=10):
-    retries = 0
     while True:
         try:
             async with websockets.connect(uri) as websocket:
                 data = await websocket.recv()
                 emg_array, bp_parameter, nt_parameter, lp_parameter = await process_data_from_websocket(data, bp_parameter, nt_parameter, lp_parameter)
-                #print("check",emg_array)  
                 if emg_array.shape[0] != 0:
-                    print(type(emg_array))
                     #print(emg_array)
                     #print(bp_parameter, nt_parameter, lp_parameter)
                     return emg_array, bp_parameter, nt_parameter, lp_parameter
-                retries += 1
         except Exception as e:
-            print(f"WebSocket error: {e}")
-            retries += 2
-    print("Max retries reached, stopping.")
+            # print(f"WebSocket error: {e}")
+            pass
 
 async def process_data_from_websocket(data, bp_parameter, nt_parameter, lp_parameter):
     emg_values = np.zeros((6,50))
     j = 0
     try:
-        data_dict = json.loads(data)  # 解析JSON数据
+        data_dict = json.loads(data)
         if "contents" in data_dict:
             # 提取 serial_number 和 eeg 的值
             serial_numbers_eegs = [(item['serial_number'][0], item['eeg']) for item in data_dict['contents']]
@@ -58,7 +53,7 @@ async def process_data_from_websocket(data, bp_parameter, nt_parameter, lp_param
     except json.JSONDecodeError:
         print("Failed to decode JSON from WebSocket")
     except Exception as e:
-        print(f"Error processing data from WebSocket: {e}")
+        # print(f"Error processing data from WebSocket: {e}")
         return np.array([]), bp_parameter, nt_parameter, lp_parameter
 
 # 带通滤波器设计

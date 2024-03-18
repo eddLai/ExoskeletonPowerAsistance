@@ -91,13 +91,13 @@ class ExoskeletonEnv2(gym.Env):
         self.writer = None
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(15,), dtype=np.float32)
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
-        # self.log_writer = SummaryWriter(save_path)
+        self.log_writer = SummaryWriter(save_path)
         
     async def step(self, action):
         return await asyncio.run(self.async_step(action))
     async def async_step(self, action):
         # 改回用send_action_to_exoskeleton_speed函數
-        # await client_order.FREEX_CMD(self.writer, "C", action[0], "C", action[1])
+        await client_order.FREEX_CMD(self.writer, "C", action[0], "C", action[1])
         new_observation, new_emg_observation, new_bp_parameter, new_nt_parameter, new_lp_parameter = await client_order.get_INFO(self.reader, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
         
         if new_observation.shape[0] != 0:
@@ -109,10 +109,10 @@ class ExoskeletonEnv2(gym.Env):
             self.lp_parameter = new_lp_parameter
             if self.init_time <= 10000:
                 self.init_time = self.init_time + 50  #len(new_emg_observation)
-        self.reward = self.calculate_reward()
+        self.reward = await self.calculate_reward()
         done = self.check_if_done(self.observation)
         self.current_step += 1
-        # self.render()
+        self.render()
         return np.concatenate([self.observation, self.emg_observation], axis=0), self.reward, done, {}
     
     def reset(self):
@@ -122,7 +122,7 @@ class ExoskeletonEnv2(gym.Env):
         if self.writer is not None:
             self.writer.close()
             await self.writer.wait_closed()
-        # self.reader, self.writer = await client_order.connect_FREEX(self.host, self.port)
+        self.reader, self.writer = await client_order.connect_FREEX(self.host, self.port)
         self.observation, emg_observation, self.bp_parameter, self.nt_parameter, self.lp_parameter = await client_order.get_INFO(self.reader, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
         self.emg_observation = np.sqrt(np.mean(emg_observation**2, axis=1))
 
