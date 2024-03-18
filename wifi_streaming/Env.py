@@ -121,7 +121,7 @@ class ExoskeletonEnv2(gym.Env):
         # self.reader, self.writer = await client_order.connect_FREEX(self.host, self.port)
         self.observation, self.emg_observation, self.ft_parameter = await client_order.get_INFO(self.reader, self.uri, self.ft_parameter)
 
-        return np.concatenate(self.observation, self.emg_observation)
+        return np.concatenate(self.observation, self.emg_observation)  #self.emg_observation的格式
         # return np.zeros(15)
 
     async def calculate_reward(self):

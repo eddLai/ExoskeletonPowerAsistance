@@ -38,7 +38,7 @@ async def process_data_from_websocket(data,ft_parameter):
                 print(f"Serial Number: {serial_number}, EEG: {eeg}")
                 for i in range(6):
                     emg_values[i,j] = eeg[i]      # 最新的50筆emg資料
-                    j+=1
+                j+=1
             try:
                 emg_array = np.empty((6, 50))
                 for k in range(6):
@@ -50,7 +50,7 @@ async def process_data_from_websocket(data,ft_parameter):
         print("Failed to decode JSON from WebSocket")
     except Exception as e:
         print(f"Error processing data from WebSocket: {e}")
-        return None
+        return None, ft_parameter
 
 # 带通滤波器设计
 def bandpass_filter(data, lowcut, highcut, fs, bp_filter_state, order=4):
@@ -109,7 +109,7 @@ async def calculate_emg_level(data, initial_max_min_rms_values, times):
     # 使用第1秒到第10秒的数据来确定初始的最小、最大RMS值
     elif 1000 < times <= 10000:
         for i in range(6):
-            rms_values = calculate_rms(data[i])
+            rms_values = data[i]
             if initial_max_min_rms_values[i][0] == 0 or rms_values > initial_max_min_rms_values[i][0]:
                 initial_max_min_rms_values[i][0] = rms_values
             elif initial_max_min_rms_values[i][1] == 0 or rms_values < initial_max_min_rms_values[i][1]:
@@ -117,13 +117,37 @@ async def calculate_emg_level(data, initial_max_min_rms_values, times):
         return 0, initial_max_min_rms_values
     #每0.05秒傳出reward值
     else:
-        reward = np.array(6)
+        reward = np.zeros(6)
         y = 0
         for i in range(6):
-            rms_values = calculate_rms(data[i])
+            rms_values = data[i]
             reward[i] = map_to_levels(rms_values, initial_max_min_rms_values[i])
             y = y + reward[i]
         return y, initial_max_min_rms_values
+
+# async def calculate_emg_level(data, initial_max_min_rms_values, times):
+
+#     #前1秒為暖機
+#     if times <= 1000:
+#         return 0, initial_max_min_rms_values
+#     # 使用第1秒到第10秒的数据来确定初始的最小、最大RMS值
+#     elif 1000 < times <= 10000:
+#         for i in range(6):
+#             rms_values = calculate_rms(data[i])
+#             if initial_max_min_rms_values[i][0] == 0 or rms_values > initial_max_min_rms_values[i][0]:
+#                 initial_max_min_rms_values[i][0] = rms_values
+#             elif initial_max_min_rms_values[i][1] == 0 or rms_values < initial_max_min_rms_values[i][1]:
+#                 initial_max_min_rms_values[i][1] = rms_values
+#         return 0, initial_max_min_rms_values
+#     #每0.05秒傳出reward值
+#     else:
+#         reward = np.array(6)
+#         y = 0
+#         for i in range(6):
+#             rms_values = calculate_rms(data[i])
+#             reward[i] = map_to_levels(rms_values, initial_max_min_rms_values[i])
+#             y = y + reward[i]
+#         return y, initial_max_min_rms_values
 
 def calculate_rms(signal):
     """计算信号的RMS值。"""
