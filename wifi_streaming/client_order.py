@@ -44,7 +44,7 @@ async def connect_FREEX(host='192.168.4.1', port=8080):
     print(f"Successfully connected to {host}:{port}")
     return reader, writer
 
-async def get_INFO(reader,uri,ft_parameter):
+async def get_INFO(reader, uri, bp_parameter, nt_parameter, lp_parameter):
     try:
         # data = await reader.readuntil(separator=b'\n')
         # data_str = data.decode('utf-8').strip()
@@ -53,12 +53,12 @@ async def get_INFO(reader,uri,ft_parameter):
         # # print("analyzed: ", analyzed_data)
         analyzed_data = np.random.rand(9)
         # emg
-        emg_observation, ft_parameter = await emgdata.read_specific_data_from_websocket(uri ,ft_parameter)
-        return analyzed_data, emg_observation, ft_parameter
+        emg_observation, bp_parameter, nt_parameter, lp_parameter = await emgdata.read_specific_data_from_websocket(uri ,bp_parameter, nt_parameter, lp_parameter)
+        return analyzed_data, emg_observation, bp_parameter, nt_parameter, lp_parameter
     
     except asyncio.IncompleteReadError as ex:
         print(f"An error occurred: {ex}")
-        return None
+        return np.array([]), np.array([]), bp_parameter, nt_parameter, lp_parameter
 
 def check_if_safe(limit:int, angle, speed):
     if angle is None:

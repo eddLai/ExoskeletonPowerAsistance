@@ -78,8 +78,10 @@ class ExoskeletonEnv2(gym.Env):
         self.port = port
         self.uri = url
         self.observation = np.zeros(9)
-        self.emg_observation = np.zeros((6))
-        self.ft_parameter = np.zeros((6,3))
+        self.emg_observation = np.zeros(6)
+        self.bp_parameter = np.zeros((6,8))
+        self.nt_parameter = np.zeros((6,2))
+        self.lp_parameter = np.zeros((6,4))
         self.initial_max_min_rms_values = np.zeros((6,2))
         self.current_step = 0
         self.init_time = 0
@@ -96,20 +98,22 @@ class ExoskeletonEnv2(gym.Env):
     async def async_step(self, action):
         # 改回用send_action_to_exoskeleton_speed函數
         # await client_order.FREEX_CMD(self.writer, "C", action[0], "C", action[1])
-        new_observation, new_emg_observation, new_ft_parameter = await client_order.get_INFO(self.reader, self.uri ,self.ft_parameter)
+        new_observation, new_emg_observation, new_bp_parameter, new_nt_parameter, new_lp_parameter = await client_order.get_INFO(self.reader, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
         
         if new_observation.shape[0] != 0:
             self.observation = new_observation
         if new_emg_observation.shape[0] != 0:
             self.emg_observation = np.sqrt(np.mean(new_emg_observation**2, axis=1))
-            self.ft_parameter = new_ft_parameter
+            self.bp_parameter = new_bp_parameter
+            self.nt_parameter = new_nt_parameter
+            self.lp_parameter = new_lp_parameter
             if self.init_time <= 10000:
                 self.init_time = self.init_time + 50  #len(new_emg_observation)
         self.reward = self.calculate_reward()
         done = self.check_if_done(self.observation)
         self.current_step += 1
         # self.render()
-        return np.concatenate(self.observation, self.emg_observation), self.reward, done, {}
+        return np.concatenate([self.observation, self.emg_observation], axis=0), self.reward, done, {}
     
     def reset(self):
         return asyncio.run(self.async_reset())
@@ -119,9 +123,10 @@ class ExoskeletonEnv2(gym.Env):
             self.writer.close()
             await self.writer.wait_closed()
         # self.reader, self.writer = await client_order.connect_FREEX(self.host, self.port)
-        self.observation, self.emg_observation, self.ft_parameter = await client_order.get_INFO(self.reader, self.uri, self.ft_parameter)
+        self.observation, emg_observation, self.bp_parameter, self.nt_parameter, self.lp_parameter = await client_order.get_INFO(self.reader, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
+        self.emg_observation = np.sqrt(np.mean(emg_observation**2, axis=1))
 
-        return np.concatenate(self.observation, self.emg_observation)  #self.emg_observation的格式
+        np.concatenate([self.observation, self.emg_observation], axis=0)  #self.emg_observation的格式
         # return np.zeros(15)
 
     async def calculate_reward(self):

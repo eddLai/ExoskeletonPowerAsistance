@@ -34,7 +34,7 @@ async def main():
             action2 = str(random.randint(-5, 5) * 1000)
             state, reward, done, info = await env.async_step([action1,action2])
             print(state)
-            await asyncio.sleep(0.05)
+            #await asyncio.sleep(0.05)
     finally:
         pass
         # env.writer.close()
