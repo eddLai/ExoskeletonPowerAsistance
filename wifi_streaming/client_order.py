@@ -46,12 +46,12 @@ async def connect_FREEX(host='192.168.4.1', port=8080):
 
 async def get_INFO(reader, uri, bp_parameter, nt_parameter, lp_parameter):
     try:
-        data = await reader.readuntil(separator=b'\n')
-        data_str = data.decode('utf-8').strip()
-        # print("raw data: ", data_str)
-        analyzed_data = analysis(data_str)
-        # print("analyzed: ", analyzed_data)
-        # analyzed_data = np.random.rand(9)
+        # data = await reader.readuntil(separator=b'\n')
+        # data_str = data.decode('utf-8').strip()
+        # # print("raw data: ", data_str)
+        # analyzed_data = analysis(data_str)
+        # # print("analyzed: ", analyzed_data)
+        analyzed_data = np.random.rand(9)
         # emg
         emg_observation, bp_parameter, nt_parameter, lp_parameter = await emgdata.read_specific_data_from_websocket(uri ,bp_parameter, nt_parameter, lp_parameter)
         return analyzed_data, emg_observation, bp_parameter, nt_parameter, lp_parameter
