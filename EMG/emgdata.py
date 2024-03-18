@@ -13,15 +13,15 @@ import pandas as pd
 # stop_event = asyncio.Event()  # 控制无限循环的停止
 
 async def read_specific_data_from_websocket(uri, bp_parameter, nt_parameter, lp_parameter, max_retries=10):
-    while True:
         try:
             async with websockets.connect(uri) as websocket:
-                data = await websocket.recv()
-                emg_array, bp_parameter, nt_parameter, lp_parameter = await process_data_from_websocket(data, bp_parameter, nt_parameter, lp_parameter)
-                if emg_array.shape[0] != 0:
-                    #print(emg_array)
-                    #print(bp_parameter, nt_parameter, lp_parameter)
-                    return emg_array, bp_parameter, nt_parameter, lp_parameter
+                while True:
+                    data = await websocket.recv()
+                    emg_array, bp_parameter, nt_parameter, lp_parameter = await process_data_from_websocket(data, bp_parameter, nt_parameter, lp_parameter)
+                    if emg_array.shape[0] != 0:
+                        #print(emg_array)
+                        #print(bp_parameter, nt_parameter, lp_parameter)
+                        return emg_array, bp_parameter, nt_parameter, lp_parameter
         except Exception as e:
             # print(f"WebSocket error: {e}")
             pass
