@@ -2,12 +2,7 @@ import asyncio
 import numpy as np
 from EMG import emgdata
 import numpy as np
-from scipy.signal import butter, lfilter, iirnotch, lfilter_zi
 import asyncio
-import aiohttp
-import websockets
-import json
-import time
 
 def analysis(data):
     result = []
@@ -28,7 +23,7 @@ def analysis(data):
         
         if len(result) == 9:
             return np.array(result)
-    return np.array([])
+    return np.zeros([9,])
 
 
 async def FREEX_CMD(writer, mode1="A", value1="-5000", mode2="A", value2="-5000"):
@@ -56,7 +51,7 @@ async def get_INFO(reader, uri, bp_parameter, nt_parameter, lp_parameter):
     
     except asyncio.IncompleteReadError as ex:
         print(f"An error occurred: {ex}")
-        return np.array([]), np.array([]), bp_parameter, nt_parameter, lp_parameter
+        return np.zeros([9,]), np.zeros([6,]), bp_parameter, nt_parameter, lp_parameter
 
 def check_if_safe(limit:int, angle, speed):
     print(angle)
@@ -88,13 +83,13 @@ async def send_action_to_exoskeleton_speed(writer, action, state):
     L_angle = state[3]
     check_R = await if_not_safe(LIMIT, action[0], R_angle)
     check_L = await if_not_safe(LIMIT, action[1], L_angle)
-    if check_R and check_L:
+    if (check_R and check_L) or (action[0] == 0 and action[1] == 0):
         print("both aborted")
         await FREEX_CMD(writer, "E", "0", "E", "0")
-    elif check_R:
+    elif check_R or (action[0] == 0):
         print("motor R: ", action[0], "\tangle: ", R_angle, ", aborted")
         await FREEX_CMD(writer, "E", "0", 'C', f"{action[1]}")
-    elif check_L:
+    elif check_L or (action[1] == 0):
         await FREEX_CMD(writer, 'C', f"{action[0]}", "E", "0")
         print("motor L: ", action[1], "\tangle: ", L_angle, ", aborted")
     else:

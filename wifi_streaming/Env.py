@@ -38,9 +38,9 @@ class ExoskeletonEnv(gym.Env):
         # await client_order.FREEX_CMD(self.writer, "C", action[0], "C", action[1])
         new_observation, new_emg_observation, new_bp_parameter, new_nt_parameter, new_lp_parameter = await client_order.get_INFO(self.reader, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
         
-        if new_observation.shape[0] != 0:
+        if not np.all(new_observation==0):
             self.observation = new_observation
-        if new_emg_observation.shape[0] != 0:
+        if not np.all(new_emg_observation==0):
             self.emg_observation = np.sqrt(np.mean(new_emg_observation**2, axis=1))
             self.bp_parameter = new_bp_parameter
             self.nt_parameter = new_nt_parameter
@@ -48,7 +48,6 @@ class ExoskeletonEnv(gym.Env):
             if self.init_time <= 10000:
                 self.init_time = self.init_time + 50  #len(new_emg_observation)
         
-        print(self.observation)
         await client_order.send_action_to_exoskeleton(self.writer, action, self.observation ,"speed")
         self.reward = await self.calculate_reward()
         done = self.check_if_done(self.observation)
