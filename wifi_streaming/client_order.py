@@ -8,8 +8,6 @@ import aiohttp
 import websockets
 import json
 import time
-# import keyboard
-# import random
 
 def analysis(data):
     result = []
@@ -76,53 +74,38 @@ async def disable_exoskeleton(writer):
     # await FREEX_CMD(writer, "E", "0", "E", "0")
     pass
 
+async def if_not_safe(limit, angle, speed):
+    if (angle >= limit and speed > 0) or (angle <= -limit and speed < 0):
+        return True
+    else:
+        return False
+
 async def send_action_to_exoskeleton_speed(writer, action, state):
     action[0] *= 1000
     action[1] *= 1000
-    # action[0] = check_if_safe(10, state[0], action[0])
-    # action[1] = check_if_safe(10, state[3], action[1])
-    await FREEX_CMD(writer, 'C', f"{action[0]}", 'C', f"{action[1]}")
-
-async def send_action_to_exoskeleton_angle(client_socket, action):
-    # 将动作值映射到[-45, 45]度的角度上
-    # 动作值应该是一个包含两个元素的数组，分别对应两个电机
-    motor_angle_1 = int(action[0] * 4500)  # 将动作值映射到角度值，考虑到角度单位是0.01度
-    motor_angle_2 = int(action[1] * 4500)
-    FREEX_CMD(client_socket, 'A', motor_angle_1, 'A', motor_angle_2)
-    return True
+    LIMIT = 10
+    R_angle = state[0]
+    L_angle = state[3]
+    check_R = await if_not_safe(LIMIT, action[0], R_angle)
+    check_L = await if_not_safe(LIMIT, action[1], L_angle)
+    if check_R and check_L:
+        print("both aborted")
+        await FREEX_CMD(writer, "E", "0", "E", "0")
+    elif check_R:
+        print("motor R: ", action[0], "\tangle: ", R_angle, ", aborted")
+        await FREEX_CMD(writer, "E", "0", 'C', f"{action[1]}")
+    elif check_L:
+        await FREEX_CMD(writer, 'C', f"{action[0]}", "E", "0")
+        print("motor L: ", action[1], "\tangle: ", L_angle, ", aborted")
+    else:
+        print("OK")
+        await FREEX_CMD(writer, 'C', f"{action[0]}", 'C', f"{action[1]}")
+    print("-----------------------------")
 
 async def send_action_to_exoskeleton(writer, action, state, control_type='speed'):
     if control_type == 'speed':
         return await send_action_to_exoskeleton_speed(writer, action, state)
-    elif control_type == 'angle':
-        return await send_action_to_exoskeleton_angle(writer, action)
     elif control_type == 'disable':
         return await disable_exoskeleton(writer)
     else:
         raise ValueError("Unknown control_type specified.")
-
-
-# async def main():
-#     host = '192.168.4.1'
-#     port = 8080
-#     reader, writer = await connect_FREEX(host, port)
-    
-#     try:
-#         while True:
-#             if keyboard.is_pressed('q'):
-#                 print("Exiting...")
-#                 break
-#             observation = await get_INFO(reader)
-#             value = str(random.randint(-5, 5) * 1000)
-#             if len(observation) > 0:
-#                 value = check_if_safe(10, observation[0], value)
-#             await FREEX_CMD(writer, "A", "0", "C", value)
-#             await asyncio.sleep(0.05)
-#     except KeyboardInterrupt:
-#         print("Program terminated by user.")
-#     finally:
-#         writer.close()
-#         await writer.wait_closed()
-
-# if __name__ == "__main__":
-#     asyncio.run(main())

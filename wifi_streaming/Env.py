@@ -36,6 +36,7 @@ class ExoskeletonEnv2(gym.Env):
     async def async_step(self, action):
         # 改回用send_action_to_exoskeleton_speed函數
         # await client_order.FREEX_CMD(self.writer, "C", action[0], "C", action[1])
+        print(self.observation)
         new_observation, new_emg_observation, new_bp_parameter, new_nt_parameter, new_lp_parameter = await client_order.get_INFO(self.reader, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
         await client_order.send_action_to_exoskeleton(self.writer, action, self.observation ,"speed")
         
@@ -52,7 +53,6 @@ class ExoskeletonEnv2(gym.Env):
         done = self.check_if_done(self.observation)
         self.current_step += 1
         self.render()
-        # self.observation = np.expand_dims(self.observation, axis=1)
         return np.concatenate([self.observation, self.emg_observation], axis=0), self.reward, done, {}
     
     def reset(self):
@@ -66,7 +66,6 @@ class ExoskeletonEnv2(gym.Env):
         await client_order.FREEX_CMD(self.writer, "E", "0", "E", "0")
         self.observation, self.emg_observation, self.bp_parameter, self.nt_parameter, self.lp_parameter = await client_order.get_INFO(self.reader, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
         self.emg_observation = np.sqrt(np.mean(self.emg_observation**2, axis=1))
-        # self.observation = np.expand_dims(self.observation, axis=1)
         return np.concatenate([self.observation, self.emg_observation], axis=0)  #self.emg_observation的格式
         # return np.zeros(15)
 
