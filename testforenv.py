@@ -16,14 +16,17 @@ async def main():
                 print("Exiting...")
                 break
             # action = env.action_space.sample()
-            action1 = str(random.randint(-5, 5) * 1000)
-            action2 = str(random.randint(-5, 5) * 1000)
+            action1 = random.randint(-5, 5)
+            action2 = random.randint(-5, 5)
+            # action1 = str(0)
+            # action2 = str(0)
             state, reward, done, info = await env.async_step([action1,action2])
             print("state:")
             print(state)
             await asyncio.sleep(0.05)
     finally:
-        env.log_writer.close()
+        if not asyncio.get_running_loop().is_closed():
+            env.log_writer.close()
 
 if __name__ == "__main__":
     asyncio.run(main())

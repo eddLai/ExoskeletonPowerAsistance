@@ -36,7 +36,7 @@ async def process_data_from_websocket(data, bp_parameter, nt_parameter, lp_param
             serial_numbers_eegs = [(item['serial_number'][0], item['eeg']) for item in data_dict['contents']]
             # 輸出結果
             for serial_number, eeg in serial_numbers_eegs:
-                print(f"Serial Number: {serial_number}, EEG: {eeg}")
+                # print(f"Serial Number: {serial_number}, EEG: {eeg}")
                 for i in range(6):
                     emg_values[i,j] = eeg[i]      # 最新的50筆emg資料
                 j+=1

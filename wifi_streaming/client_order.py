@@ -61,20 +61,31 @@ async def get_INFO(reader, uri, bp_parameter, nt_parameter, lp_parameter):
         return np.array([]), np.array([]), bp_parameter, nt_parameter, lp_parameter
 
 def check_if_safe(limit:int, angle, speed):
+    print(angle)
+    angle = int(angle)
     if angle is None:
         print("ur safe now (angle is None)")
-        return "0"
-    elif (angle >= limit and speed <= 0) or (angle <= -limit and speed <= 0):
+        return 0
+    elif (angle >= limit and speed > 0) or (angle <= -limit and speed < 0):
         print("ur safe now")
-        return "0"
+        return 0
     else:
-        return str(speed)
+        return speed
     
-async def send_action_to_exoskeleton_speed(writer, action):
-    motor_speed = action * 1000
-    await FREEX_CMD(writer, 'C', f"{motor_speed[0]}", 'C', f"{motor_speed[1]}")
+async def disable_exoskeleton(writer):
+    # await FREEX_CMD(writer, "E", "0", "E", "0")
+    pass
 
-def send_action_to_exoskeleton_angle(client_socket, action):
+async def send_action_to_exoskeleton_speed(writer, action, state):
+    action[0] *= 1000
+    action[1] *= 1000
+    action[0] = check_if_safe(10, state[0], action[0])
+    print("motor R: ", action[0])
+    action[1] = check_if_safe(10, state[3], action[1])
+    print("motor L: ", action[1])
+    await FREEX_CMD(writer, 'C', f"{action[0]}", 'C', f"{action[1]}")
+
+async def send_action_to_exoskeleton_angle(client_socket, action):
     # 将动作值映射到[-45, 45]度的角度上
     # 动作值应该是一个包含两个元素的数组，分别对应两个电机
     motor_angle_1 = int(action[0] * 4500)  # 将动作值映射到角度值，考虑到角度单位是0.01度
@@ -82,11 +93,13 @@ def send_action_to_exoskeleton_angle(client_socket, action):
     FREEX_CMD(client_socket, 'A', motor_angle_1, 'A', motor_angle_2)
     return True
 
-async def send_action_to_exoskeleton(writer, action, control_type='torque'):
+async def send_action_to_exoskeleton(writer, action, state, control_type='speed'):
     if control_type == 'speed':
-        return await send_action_to_exoskeleton_speed(writer, action)
+        return await send_action_to_exoskeleton_speed(writer, action, state)
     elif control_type == 'angle':
         return await send_action_to_exoskeleton_angle(writer, action)
+    elif control_type == 'disable':
+        return await disable_exoskeleton(writer)
     else:
         raise ValueError("Unknown control_type specified.")
 
