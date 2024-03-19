@@ -79,9 +79,9 @@ async def disable_exoskeleton(writer):
 async def send_action_to_exoskeleton_speed(writer, action, state):
     action[0] *= 1000
     action[1] *= 1000
-    action[0] = check_if_safe(10, state[0], action[0])
+    # action[0] = check_if_safe(10, state[0], action[0])
     print("motor R: ", action[0])
-    action[1] = check_if_safe(10, state[3], action[1])
+    # action[1] = check_if_safe(10, state[3], action[1])
     print("motor L: ", action[1])
     await FREEX_CMD(writer, 'C', f"{action[0]}", 'C', f"{action[1]}")
 
