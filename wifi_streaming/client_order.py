@@ -23,6 +23,7 @@ def analysis(data):
         
         if len(result) == 9:
             return np.array(result)
+    print(f"Failed to analyze data: {data}")
     return np.zeros([9,])
 
 
@@ -64,10 +65,6 @@ def check_if_safe(limit:int, angle, speed):
         return 0
     else:
         return speed
-    
-async def disable_exoskeleton(writer):
-    # await FREEX_CMD(writer, "E", "0", "E", "0")
-    pass
 
 async def if_not_safe(limit, angle, speed):
     if (angle >= limit and speed > 0) or (angle <= -limit and speed < 0):
@@ -76,11 +73,13 @@ async def if_not_safe(limit, angle, speed):
         return False
 
 async def send_action_to_exoskeleton_speed(writer, action, state):
-    action[0] *= 1000
-    action[1] *= 1000
-    LIMIT = 10
+    action[0] *= 10000
+    action[1] *= 10000
+    LIMIT = 45
     R_angle = state[0]
     L_angle = state[3]
+    print("action: ", action)
+    print("R: ",R_angle, "L: ", L_angle)
     check_R = await if_not_safe(LIMIT, action[0], R_angle)
     check_L = await if_not_safe(LIMIT, action[1], L_angle)
     if (check_R and check_L) or (action[0] == 0 and action[1] == 0):
@@ -101,6 +100,6 @@ async def send_action_to_exoskeleton(writer, action, state, control_type='speed'
     if control_type == 'speed':
         return await send_action_to_exoskeleton_speed(writer, action, state)
     elif control_type == 'disable':
-        return await disable_exoskeleton(writer)
+        pass
     else:
         raise ValueError("Unknown control_type specified.")

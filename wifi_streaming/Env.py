@@ -39,7 +39,10 @@ class ExoskeletonEnv(gym.Env):
         new_observation, new_emg_observation, new_bp_parameter, new_nt_parameter, new_lp_parameter = await client_order.get_INFO(self.reader, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
         
         if not np.all(new_observation==0):
+            print("data is good")
             self.observation = new_observation
+        else:
+            print("use the old data")
         if not np.all(new_emg_observation==0):
             self.emg_observation = np.sqrt(np.mean(new_emg_observation**2, axis=1))
             self.bp_parameter = new_bp_parameter
