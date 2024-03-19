@@ -8,7 +8,7 @@ from wifi_streaming import Env
 
 async def main():
     try:
-        env = Env.ExoskeletonEnv2(device='cuda', save_path="runs/testforenv")
+        env = Env.ExoskeletonEnv(device='cuda', save_path="runs/testforenv")
         state = await env.async_reset()
         done = False
         while not done:

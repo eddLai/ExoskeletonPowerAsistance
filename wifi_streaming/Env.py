@@ -6,11 +6,11 @@ from gym import spaces
 import numpy as np
 from tensorboardX import SummaryWriter
 
-class ExoskeletonEnv2(gym.Env):
+class ExoskeletonEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
     def __init__(self, device='cpu',save_path="runs/Env_test" , host='192.168.4.1', url= "ws://localhost:31278/ws", port=8080):
-        super(ExoskeletonEnv2, self).__init__()
+        super(ExoskeletonEnv, self).__init__()
         self.device = device
         self.host = host
         self.port = port
@@ -36,9 +36,7 @@ class ExoskeletonEnv2(gym.Env):
     async def async_step(self, action):
         # 改回用send_action_to_exoskeleton_speed函數
         # await client_order.FREEX_CMD(self.writer, "C", action[0], "C", action[1])
-        print(self.observation)
         new_observation, new_emg_observation, new_bp_parameter, new_nt_parameter, new_lp_parameter = await client_order.get_INFO(self.reader, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
-        await client_order.send_action_to_exoskeleton(self.writer, action, self.observation ,"speed")
         
         if new_observation.shape[0] != 0:
             self.observation = new_observation
@@ -49,6 +47,9 @@ class ExoskeletonEnv2(gym.Env):
             self.lp_parameter = new_lp_parameter
             if self.init_time <= 10000:
                 self.init_time = self.init_time + 50  #len(new_emg_observation)
+        
+        print(self.observation)
+        await client_order.send_action_to_exoskeleton(self.writer, action, self.observation ,"speed")
         self.reward = await self.calculate_reward()
         done = self.check_if_done(self.observation)
         self.current_step += 1
