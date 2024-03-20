@@ -189,8 +189,8 @@ class ExperienceSourceFirstLast(ExperienceSource):
         self.gamma = gamma
         self.steps = steps_count
 
-    def __aiter__(self):
-        for exp in super(ExperienceSourceFirstLast, self).__aiter__():
+    async def __aiter__(self):
+        async for exp in super(ExperienceSourceFirstLast, self).__aiter__():
             if exp[-1].done and len(exp) <= self.steps:
                 last_state = None
                 elems = exp
@@ -245,7 +245,7 @@ class ExperienceReplayBuffer:
         """
         for _ in range(samples):
             try:
-                entry = await self.experience_source.__anext__()
-                await self._add(entry)
+                async for entry in self.experience_source:
+                    await self._add(entry)
             except StopAsyncIteration:
                 break
