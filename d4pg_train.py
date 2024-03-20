@@ -129,6 +129,7 @@ async def main():
     env = Env.ExoskeletonEnv(writer)
     agent = models.AgentD4PG(act_net, device=device)
     exp_source = experience2.ExperienceSourceFirstLast(env, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
+    print("check",exp_source,type(exp_source))
     buffer = experience2.ExperienceReplayBuffer(exp_source, buffer_size=REPLAY_SIZE)
     # exp_source = experience.CustomExperienceSourceFirstLast2(env, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
     # buffer = experience.AsyncExperienceReplayBuffer(exp_source, buffer_size=REPLAY_SIZE)

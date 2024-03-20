@@ -243,9 +243,12 @@ class ExperienceReplayBuffer:
         Populates samples into the buffer asynchronously.
         :param samples: how many samples to populate
         """
+        i=1
         for _ in range(samples):
             try:
                 async for entry in self.experience_source:
+                    print(i)
                     await self._add(entry)
+                    i+=1
             except StopAsyncIteration:
                 break
