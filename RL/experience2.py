@@ -66,11 +66,13 @@ class ExperienceSource:
         self.total_steps = []
         self.vectorized = vectorized
 
-    async def __aiter__(self):
+    def __iter__(self):
         states, agent_states, histories, cur_rewards, cur_steps = [], [], [], [], []
         env_lens = []
         for env in self.pool:
-            obs = await env.async_reset()
+            obs = env.reset()
+            # if the environment is vectorized, all it's output is lists of results.
+            # Details are here: https://github.com/openai/universe/blob/master/doc/env_semantics.rst
             if self.vectorized:
                 obs_len = len(obs)
                 states.extend(obs)
@@ -92,25 +94,24 @@ class ExperienceSource:
             states_indices = []
             for idx, state in enumerate(states):
                 if state is None:
-                    actions[idx] = self.pool[0].action_space.sample()
+                    actions[idx] = self.pool[0].action_space.sample()  # assume that all envs are from the same family
                 else:
                     states_input.append(state)
                     states_indices.append(idx)
             if states_input:
-                states_actions, new_agent_states = await self.agent(states_input, agent_states)
+                states_actions, new_agent_states = self.agent(states_input, agent_states)
                 for idx, action in enumerate(states_actions):
                     g_idx = states_indices[idx]
                     actions[g_idx] = action
                     agent_states[g_idx] = new_agent_states[idx]
-
             grouped_actions = _group_list(actions, env_lens)
 
             global_ofs = 0
             for env_idx, (env, action_n) in enumerate(zip(self.pool, grouped_actions)):
                 if self.vectorized:
-                    next_state_n, r_n, is_done_n, _ = await env.async_step(action_n)
+                    next_state_n, r_n, is_done_n, _ = env.step(action_n)
                 else:
-                    next_state, r, is_done, _ = await env.async_step(action_n[0])
+                    next_state, r, is_done, _ = env.step(action_n[0])
                     next_state_n, r_n, is_done_n = [next_state], [r], [is_done]
 
                 for ofs, (action, next_state, r, is_done) in enumerate(zip(action_n, next_state_n, r_n, is_done_n)):
@@ -126,8 +127,10 @@ class ExperienceSource:
                         yield tuple(history)
                     states[idx] = next_state
                     if is_done:
+                        # in case of very short episode (shorter than our steps count), send gathered history
                         if 0 < len(history) < self.steps_count:
                             yield tuple(history)
+                        # generate tail of history
                         while len(history) > 1:
                             history.popleft()
                             yield tuple(history)
@@ -135,12 +138,12 @@ class ExperienceSource:
                         self.total_steps.append(cur_steps[idx])
                         cur_rewards[idx] = 0.0
                         cur_steps[idx] = 0
-                        states[idx] = await env.async_reset() if not self.vectorized else None
+                        # vectorized envs are reset automatically
+                        states[idx] = env.reset() if not self.vectorized else None
                         agent_states[idx] = self.agent.initial_state()
                         history.clear()
                 global_ofs += len(action_n)
             iter_idx += 1
-
 
     def pop_total_rewards(self):
         r = self.total_rewards
@@ -189,8 +192,8 @@ class ExperienceSourceFirstLast(ExperienceSource):
         self.gamma = gamma
         self.steps = steps_count
 
-    async def __aiter__(self):
-        async for exp in super(ExperienceSourceFirstLast, self).__aiter__():
+    def __iter__(self):
+        for exp in super(ExperienceSourceFirstLast, self).__iter__():
             if exp[-1].done and len(exp) <= self.steps:
                 last_state = None
                 elems = exp
@@ -208,7 +211,7 @@ class ExperienceReplayBuffer:
     def __init__(self, experience_source, buffer_size):
         assert isinstance(experience_source, (ExperienceSource, type(None)))
         assert isinstance(buffer_size, int)
-        self.experience_source = experience_source
+        self.experience_source_iter = None if experience_source is None else iter(experience_source)
         self.buffer = []
         self.capacity = buffer_size
         self.pos = 0
@@ -216,8 +219,8 @@ class ExperienceReplayBuffer:
     def __len__(self):
         return len(self.buffer)
 
-    def __aiter__(self):
-        return aiter(self.buffer)
+    def __iter__(self):
+        return iter(self.buffer)
 
     def sample(self, batch_size):
         """
@@ -228,27 +231,22 @@ class ExperienceReplayBuffer:
         """
         if len(self.buffer) <= batch_size:
             return self.buffer
+        # Warning: replace=False makes random.choice O(n)
         keys = np.random.choice(len(self.buffer), batch_size, replace=True)
         return [self.buffer[key] for key in keys]
 
-    async def _add(self, sample):
+    def _add(self, sample):
         if len(self.buffer) < self.capacity:
             self.buffer.append(sample)
         else:
             self.buffer[self.pos] = sample
         self.pos = (self.pos + 1) % self.capacity
 
-    async def populate(self, samples):
+    def populate(self, samples):
         """
-        Populates samples into the buffer asynchronously.
+        Populates samples into the buffer
         :param samples: how many samples to populate
         """
-        i=1
         for _ in range(samples):
-            try:
-                async for entry in self.experience_source:
-                    print(i)
-                    await self._add(entry)
-                    i+=1
-            except StopAsyncIteration:
-                break
+            entry = next(self.experience_source_iter)
+            self._add(entry)
