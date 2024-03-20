@@ -7,7 +7,8 @@ import asyncio
 from tensorboardX import SummaryWriter
 import numpy as np
 
-from RL import models, experience
+from RL import models
+from RL import experience2
 
 import torch
 import torch.optim as optim
@@ -118,10 +119,10 @@ async def main():
     writer = SummaryWriter(comment="-d4pg_" + args.name)
     env = Env.ExoskeletonEnv(writer)
     agent = models.AgentD4PG(act_net, device=device)
-    # exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
-    # buffer = ptan.experience.ExperienceReplayBuffer(exp_source, buffer_size=REPLAY_SIZE)
-    exp_source = experience.CustomExperienceSourceFirstLast2(env, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
-    buffer = experience.AsyncExperienceReplayBuffer(exp_source, buffer_size=REPLAY_SIZE)
+    exp_source = experience2.ExperienceSourceFirstLast(env, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
+    buffer = experience2.ExperienceReplayBuffer(exp_source, buffer_size=REPLAY_SIZE)
+    # exp_source = experience.CustomExperienceSourceFirstLast2(env, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
+    # buffer = experience.AsyncExperienceReplayBuffer(exp_source, buffer_size=REPLAY_SIZE)
     act_opt = optim.SGD(act_net.parameters(), lr=LEARNING_RATE, momentum=MOMENTUM)
     crt_opt = optim.Adam(crt_net.parameters(), lr=LEARNING_RATE)
 
@@ -133,7 +134,7 @@ async def main():
         async with AsyncContextManagerWrapper(ptan.common.utils.TBMeanTracker(writer, batch_size=10)) as tb_tracker:
             while True:
                 frame_idx += 1
-                buffer.populate(1)
+                await buffer.populate(1)
                 rewards_steps = exp_source.pop_rewards_steps()
                 if rewards_steps:
                     rewards, steps = zip(*rewards_steps)

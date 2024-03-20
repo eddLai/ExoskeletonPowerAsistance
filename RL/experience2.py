@@ -7,7 +7,30 @@ from torch.autograd import Variable
 import numpy as np
 
 from collections import namedtuple, deque
-from models import BaseAgent
+
+class BaseAgent:
+    """
+    Abstract Agent interface
+    """
+    def initial_state(self):
+        """
+        Should create initial empty state for the agent. It will be called for the start of the episode
+        :return: Anything agent want to remember
+        """
+        return None
+
+    async def __call__(self, states, agent_states):
+        """
+        Convert observations and states into actions to take
+        :param states: list of environment states to process
+        :param agent_states: list of states with the same length as observations
+        :return: tuple of actions, states
+        """
+        assert isinstance(states, list)
+        assert isinstance(agent_states, list)
+        assert len(agent_states) == len(states)
+
+        raise NotImplementedError
 
 Experience = namedtuple('Experience', ['state', 'action', 'reward', 'done'])
 
@@ -42,7 +65,7 @@ class ExperienceSource:
         self.total_rewards = []
         self.total_steps = []
         self.vectorized = vectorized
-        
+
     async def __aiter__(self):
         states, agent_states, histories, cur_rewards, cur_steps = [], [], [], [], []
         env_lens = []
@@ -166,8 +189,8 @@ class ExperienceSourceFirstLast(ExperienceSource):
         self.gamma = gamma
         self.steps = steps_count
 
-    def __iter__(self):
-        for exp in super(ExperienceSourceFirstLast, self).__iter__():
+    def __aiter__(self):
+        for exp in super(ExperienceSourceFirstLast, self).__aiter__():
             if exp[-1].done and len(exp) <= self.steps:
                 last_state = None
                 elems = exp
@@ -185,7 +208,7 @@ class ExperienceReplayBuffer:
     def __init__(self, experience_source, buffer_size):
         assert isinstance(experience_source, (ExperienceSource, type(None)))
         assert isinstance(buffer_size, int)
-        self.experience_source_iter = None if experience_source is None else iter(experience_source)
+        self.experience_source = experience_source
         self.buffer = []
         self.capacity = buffer_size
         self.pos = 0
@@ -193,8 +216,8 @@ class ExperienceReplayBuffer:
     def __len__(self):
         return len(self.buffer)
 
-    def __iter__(self):
-        return iter(self.buffer)
+    def __aiter__(self):
+        return aiter(self.buffer)
 
     def sample(self, batch_size):
         """
@@ -205,22 +228,24 @@ class ExperienceReplayBuffer:
         """
         if len(self.buffer) <= batch_size:
             return self.buffer
-        # Warning: replace=False makes random.choice O(n)
         keys = np.random.choice(len(self.buffer), batch_size, replace=True)
         return [self.buffer[key] for key in keys]
 
-    def _add(self, sample):
+    async def _add(self, sample):
         if len(self.buffer) < self.capacity:
             self.buffer.append(sample)
         else:
             self.buffer[self.pos] = sample
         self.pos = (self.pos + 1) % self.capacity
 
-    def populate(self, samples):
+    async def populate(self, samples):
         """
-        Populates samples into the buffer
+        Populates samples into the buffer asynchronously.
         :param samples: how many samples to populate
         """
         for _ in range(samples):
-            entry = next(self.experience_source_iter)
-            self._add(entry)
+            try:
+                entry = await self.experience_source.__anext__()
+                await self._add(entry)
+            except StopAsyncIteration:
+                break

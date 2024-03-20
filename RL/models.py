@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from RL import experience2
 
 HID_SIZE = 20
 
@@ -49,7 +50,7 @@ class D4PGCritic(nn.Module):
         res = weights.sum(dim=1)
         return res.unsqueeze(dim=-1)
 
-class AgentD4PG(ptan.agent.BaseAgent):
+class AgentD4PG(experience2.BaseAgent):
     """
     Agent implementing noisy agent
     """
@@ -58,7 +59,7 @@ class AgentD4PG(ptan.agent.BaseAgent):
         self.device = device
         self.epsilon = epsilon
 
-    def __call__(self, states, agent_states):
+    async def __call__(self, states, agent_states):
         states_v = ptan.agent.float32_preprocessor(states)
         states_v = states_v.to(self.device)
         mu_v = self.net(states_v)
