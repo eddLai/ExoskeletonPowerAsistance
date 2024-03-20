@@ -42,14 +42,12 @@ class ExperienceSource:
         self.total_rewards = []
         self.total_steps = []
         self.vectorized = vectorized
-
-    async def __iter__(self):
+        
+    async def __aiter__(self):
         states, agent_states, histories, cur_rewards, cur_steps = [], [], [], [], []
         env_lens = []
         for env in self.pool:
             obs = await env.async_reset()
-            # if the environment is vectorized, all it's output is lists of results.
-            # Details are here: https://github.com/openai/universe/blob/master/doc/env_semantics.rst
             if self.vectorized:
                 obs_len = len(obs)
                 states.extend(obs)
@@ -71,16 +69,17 @@ class ExperienceSource:
             states_indices = []
             for idx, state in enumerate(states):
                 if state is None:
-                    actions[idx] = self.pool[0].action_space.sample()  # assume that all envs are from the same family
+                    actions[idx] = self.pool[0].action_space.sample()
                 else:
                     states_input.append(state)
                     states_indices.append(idx)
             if states_input:
-                states_actions, new_agent_states = self.agent(states_input, agent_states)
+                states_actions, new_agent_states = await self.agent(states_input, agent_states)
                 for idx, action in enumerate(states_actions):
                     g_idx = states_indices[idx]
                     actions[g_idx] = action
                     agent_states[g_idx] = new_agent_states[idx]
+
             grouped_actions = _group_list(actions, env_lens)
 
             global_ofs = 0
@@ -104,10 +103,8 @@ class ExperienceSource:
                         yield tuple(history)
                     states[idx] = next_state
                     if is_done:
-                        # in case of very short episode (shorter than our steps count), send gathered history
                         if 0 < len(history) < self.steps_count:
                             yield tuple(history)
-                        # generate tail of history
                         while len(history) > 1:
                             history.popleft()
                             yield tuple(history)
@@ -115,12 +112,12 @@ class ExperienceSource:
                         self.total_steps.append(cur_steps[idx])
                         cur_rewards[idx] = 0.0
                         cur_steps[idx] = 0
-                        # vectorized envs are reset automatically
                         states[idx] = await env.async_reset() if not self.vectorized else None
                         agent_states[idx] = self.agent.initial_state()
                         history.clear()
                 global_ofs += len(action_n)
             iter_idx += 1
+
 
     def pop_total_rewards(self):
         r = self.total_rewards
