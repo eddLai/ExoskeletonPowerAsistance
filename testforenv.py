@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import keyboard
 import asyncio
-import asyncio
 from matplotlib.animation import FuncAnimation
 from wifi_streaming import Env, client_order
 import numpy as np

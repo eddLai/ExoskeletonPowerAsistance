@@ -23,7 +23,7 @@ async def read_specific_data_from_websocket(uri, bp_parameter, nt_parameter, lp_
                         #print(bp_parameter, nt_parameter, lp_parameter)
                         return emg_array, bp_parameter, nt_parameter, lp_parameter
         except Exception as e:
-            # print(f"WebSocket error: {e}")
+            print(f"WebSocket error: {e}")
             pass
 
 async def process_data_from_websocket(data, bp_parameter, nt_parameter, lp_parameter):

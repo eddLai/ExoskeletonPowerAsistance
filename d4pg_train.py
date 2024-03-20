@@ -6,6 +6,15 @@ import argparse
 import asyncio
 from tensorboardX import SummaryWriter
 import numpy as np
+import keyboard
+import threading
+
+def listen_for_stop_command():
+    global stop_requested
+    print("Press 'q' to stop training...")
+    keyboard.wait('q')
+    stop_requested = True
+    print("Stop requested by user.")
 
 from RL import models
 from RL import experience2
@@ -128,13 +137,28 @@ async def main():
 
     frame_idx = 0
     best_reward = None
+    stop_requested = False
+    listener_thread = threading.Thread(target=listen_for_stop_command, daemon=True)
+    listener_thread.start()
     # with ptan.common.utils.RewardTracker(writer) as tracker:
     #     with ptan.common.utils.TBMeanTracker(writer, batch_size=10) as tb_tracker:
     async with AsyncContextManagerWrapper(ptan.common.utils.RewardTracker(writer)) as tracker:
         async with AsyncContextManagerWrapper(ptan.common.utils.TBMeanTracker(writer, batch_size=10)) as tb_tracker:
             while True:
+                if stop_requested:
+                    if best_reward is not None:
+                        print("Stopping training. Saving best model with reward: %.3f" % best_reward)
+                        name = "best_%+.3f_%d.dat" % (best_reward, frame_idx)
+                        fname = os.path.join(save_path, name)
+                        torch.save(act_net.state_dict(), fname)
+                    print("Training stopped.")
+                    break
+
                 frame_idx += 1
+                #env.render()
+                print("check1")
                 await buffer.populate(1)
+                print("check2")
                 rewards_steps = exp_source.pop_rewards_steps()
                 if rewards_steps:
                     rewards, steps = zip(*rewards_steps)
@@ -180,7 +204,7 @@ async def main():
 
                 tgt_act_net.alpha_sync(alpha=1 - 1e-3)
                 tgt_crt_net.alpha_sync(alpha=1 - 1e-3)
-
+                
                 if frame_idx % TEST_ITERS == 0:
                     ts = time.time()
                     rewards, steps = test_net(act_net, env, device=device)

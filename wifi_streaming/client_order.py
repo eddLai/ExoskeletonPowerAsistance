@@ -23,7 +23,7 @@ def analysis(data):
         
         if len(result) == 9:
             return np.array(result)
-    print(f"Failed to analyze data: {data}")
+    # print(f"Failed to analyze data: {data}")
     return np.zeros([9,])
 
 
@@ -75,26 +75,28 @@ async def if_not_safe(limit, angle, speed):
 async def send_action_to_exoskeleton_speed(writer, action, state):
     action[0] *= 10000
     action[1] *= 10000
-    LIMIT = 45
+    LIMIT = 75
     R_angle = state[0]
     L_angle = state[3]
-    print("action: ", action)
-    print("R: ",R_angle, "L: ", L_angle)
+    R_current = state[2]
+    L_current = state[5]
+    # print("action: ", action)
+    # print("R: ",R_angle, "L: ", L_angle)
     check_R = await if_not_safe(LIMIT, action[0], R_angle)
     check_L = await if_not_safe(LIMIT, action[1], L_angle)
     if (check_R and check_L) or (action[0] == 0 and action[1] == 0):
-        print("both aborted")
+        # print("both aborted")
         await FREEX_CMD(writer, "E", "0", "E", "0")
     elif check_R or (action[0] == 0):
-        print("motor R: ", action[0], "\tangle: ", R_angle, ", aborted")
+        print("motor R: ", action[0], "\tangle: ", R_angle, "\tcurrent: ", R_current, "aborted")
         await FREEX_CMD(writer, "E", "0", 'C', f"{action[1]}")
     elif check_L or (action[1] == 0):
+        print("motor L: ", action[1], "\tangle: ", L_angle, "\tcurrent: ", L_current, "aborted")
         await FREEX_CMD(writer, 'C', f"{action[0]}", "E", "0")
-        print("motor L: ", action[1], "\tangle: ", L_angle, ", aborted")
     else:
-        print("OK")
+        # print("OK")
         await FREEX_CMD(writer, 'C', f"{action[0]}", 'C', f"{action[1]}")
-    print("-----------------------------")
+    # print("-----------------------------")
 
 async def send_action_to_exoskeleton(writer, action, state, control_type='speed'):
     if control_type == 'speed':
