@@ -3,6 +3,7 @@ import ptan
 import time
 from wifi_streaming import Env
 import argparse
+import asyncio
 from tensorboardX import SummaryWriter
 import numpy as np
 
@@ -29,6 +30,16 @@ Vmax = 10
 Vmin = -10
 N_ATOMS = 51
 DELTA_Z = (Vmax - Vmin) / (N_ATOMS - 1)
+
+class AsyncContextManagerWrapper:
+    def __init__(self, sync_context_manager):
+        self.sync_context_manager = sync_context_manager
+
+    async def __aenter__(self):
+        return self.sync_context_manager.__enter__()
+
+    async def __aexit__(self, exc_type, exc, tb):
+        return self.sync_context_manager.__exit__(exc_type, exc, tb)
 
 def test_net(net, env, count=10, device="cpu"):
     rewards = 0.0
@@ -93,14 +104,7 @@ def distr_projection(next_distr_v, rewards_v, dones_mask_t,
             proj_distr[ne_dones, u[ne_mask]] = (b_j - l)[ne_mask]
     return torch.FloatTensor(proj_distr).to(device)
 
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--cuda", default=False, action='store_true', help='Enable CUDA')
-    parser.add_argument("-n", "--name", required=True, help="Name of the run")
-    args = parser.parse_args()
-    device = torch.device("cuda" if args.cuda else "cpu")
-
+async def main():
     save_path = os.path.join("saves", "d4pg-" + args.name)
     os.makedirs(save_path, exist_ok=True)
 
@@ -121,72 +125,80 @@ if __name__ == "__main__":
     act_opt = optim.SGD(act_net.parameters(), lr=LEARNING_RATE, momentum=MOMENTUM)
     crt_opt = optim.Adam(crt_net.parameters(), lr=LEARNING_RATE)
 
-    # frame_idx = 0
-    # best_reward = None
+    frame_idx = 0
+    best_reward = None
     # with ptan.common.utils.RewardTracker(writer) as tracker:
     #     with ptan.common.utils.TBMeanTracker(writer, batch_size=10) as tb_tracker:
-    #         while True:
-    #             frame_idx += 1
-    #             buffer.populate(1)
-    #             rewards_steps = exp_source.pop_rewards_steps()
-    #             if rewards_steps:
-    #                 rewards, steps = zip(*rewards_steps)
-    #                 tb_tracker.track("episode_steps", steps[0], frame_idx)
-    #                 tracker.reward(rewards[0], frame_idx)
+    async with AsyncContextManagerWrapper(ptan.common.utils.RewardTracker(writer)) as tracker:
+        async with AsyncContextManagerWrapper(ptan.common.utils.TBMeanTracker(writer, batch_size=10)) as tb_tracker:
+            while True:
+                frame_idx += 1
+                buffer.populate(1)
+                rewards_steps = exp_source.pop_rewards_steps()
+                if rewards_steps:
+                    rewards, steps = zip(*rewards_steps)
+                    tb_tracker.track("episode_steps", steps[0], frame_idx)
+                    tracker.reward(rewards[0], frame_idx)
 
-    #             if len(buffer) < REPLAY_INITIAL:
-    #                 continue
+                if len(buffer) < REPLAY_INITIAL:
+                    continue
 
-    #             batch = buffer.sample(BATCH_SIZE)
-    #             states_v, actions_v, rewards_v, \
-    #             dones_mask, last_states_v = \
-    #                 models.unpack_batch(batch, device)
+                batch = buffer.sample(BATCH_SIZE)
+                states_v, actions_v, rewards_v, \
+                dones_mask, last_states_v = \
+                    models.unpack_batch(batch, device)
 
-    #             # train critic
-    #             crt_opt.zero_grad()
-    #             crt_distr_v = crt_net(states_v, actions_v)
-    #             last_act_v = tgt_act_net.target_model(
-    #                 last_states_v)
-    #             last_distr_v = F.softmax(
-    #                 tgt_crt_net.target_model(
-    #                     last_states_v, last_act_v), dim=1)
-    #             proj_distr_v = distr_projection(
-    #                 last_distr_v, rewards_v, dones_mask,
-    #                 gamma=GAMMA**REWARD_STEPS, device=device)
-    #             prob_dist_v = -F.log_softmax(
-    #                 crt_distr_v, dim=1) * proj_distr_v
-    #             critic_loss_v = prob_dist_v.sum(dim=1).mean()
-    #             critic_loss_v.backward()
-    #             crt_opt.step()
-    #             tb_tracker.track("loss_critic", critic_loss_v, frame_idx)
+                # train critic
+                crt_opt.zero_grad()
+                crt_distr_v = crt_net(states_v, actions_v)
+                last_act_v = tgt_act_net.target_model(
+                    last_states_v)
+                last_distr_v = F.softmax(
+                    tgt_crt_net.target_model(
+                        last_states_v, last_act_v), dim=1)
+                proj_distr_v = distr_projection(
+                    last_distr_v, rewards_v, dones_mask,
+                    gamma=GAMMA**REWARD_STEPS, device=device)
+                prob_dist_v = -F.log_softmax(
+                    crt_distr_v, dim=1) * proj_distr_v
+                critic_loss_v = prob_dist_v.sum(dim=1).mean()
+                critic_loss_v.backward()
+                crt_opt.step()
+                tb_tracker.track("loss_critic", critic_loss_v, frame_idx)
 
-    #             # train actor
-    #             act_opt.zero_grad()
-    #             cur_actions_v = act_net(states_v)
-    #             crt_distr_v = crt_net(states_v, cur_actions_v)
-    #             actor_loss_v = -crt_net.distr_to_q(crt_distr_v)
-    #             actor_loss_v = actor_loss_v.mean()
-    #             actor_loss_v.backward()
-    #             act_opt.step()
-    #             tb_tracker.track("loss_actor", actor_loss_v,
-    #                              frame_idx)
+                # train actor
+                act_opt.zero_grad()
+                cur_actions_v = act_net(states_v)
+                crt_distr_v = crt_net(states_v, cur_actions_v)
+                actor_loss_v = -crt_net.distr_to_q(crt_distr_v)
+                actor_loss_v = actor_loss_v.mean()
+                actor_loss_v.backward()
+                act_opt.step()
+                tb_tracker.track("loss_actor", actor_loss_v,
+                                 frame_idx)
 
-    #             tgt_act_net.alpha_sync(alpha=1 - 1e-3)
-    #             tgt_crt_net.alpha_sync(alpha=1 - 1e-3)
+                tgt_act_net.alpha_sync(alpha=1 - 1e-3)
+                tgt_crt_net.alpha_sync(alpha=1 - 1e-3)
 
-    #             if frame_idx % TEST_ITERS == 0:
-    #                 ts = time.time()
-    #                 rewards, steps = test_net(act_net, env, device=device)
-    #                 print("Test done in %.2f sec, reward %.3f, steps %d" % (
-    #                     time.time() - ts, rewards, steps))
-    #                 writer.add_scalar("test_reward", rewards, frame_idx)
-    #                 writer.add_scalar("test_steps", steps, frame_idx)
-    #                 if best_reward is None or best_reward < rewards:
-    #                     if best_reward is not None:
-    #                         print("Best reward updated: %.3f -> %.3f" % (best_reward, rewards))
-    #                         name = "best_%+.3f_%d.dat" % (rewards, frame_idx)
-    #                         fname = os.path.join(save_path, name)
-    #                         torch.save(act_net.state_dict(), fname)
-    #                     best_reward = rewards
+                if frame_idx % TEST_ITERS == 0:
+                    ts = time.time()
+                    rewards, steps = test_net(act_net, env, device=device)
+                    print("Test done in %.2f sec, reward %.3f, steps %d" % (
+                        time.time() - ts, rewards, steps))
+                    writer.add_scalar("test_reward", rewards, frame_idx)
+                    writer.add_scalar("test_steps", steps, frame_idx)
+                    if best_reward is None or best_reward < rewards:
+                        if best_reward is not None:
+                            print("Best reward updated: %.3f -> %.3f" % (best_reward, rewards))
+                            name = "best_%+.3f_%d.dat" % (rewards, frame_idx)
+                            fname = os.path.join(save_path, name)
+                            torch.save(act_net.state_dict(), fname)
+                        best_reward = rewards
 
-    # pass
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--cuda", default=False, action='store_true', help='Enable CUDA')
+    parser.add_argument("-n", "--name", required=True, help="Name of the run")
+    args = parser.parse_args()
+    device = torch.device("cuda" if args.cuda else "cpu")
+    asyncio.run(main())
