@@ -9,7 +9,7 @@ from tensorboardX import SummaryWriter
 class ExoskeletonEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, device='cpu',save_path="runs/Env_test" , host='192.168.4.1', url= "ws://localhost:31278/ws", port=8080):
+    def __init__(self, log_writer , device='cpu', host='192.168.4.1', url= "ws://localhost:31278/ws", port=8080):
         super(ExoskeletonEnv, self).__init__()
         self.device = device
         self.host = host
@@ -29,7 +29,7 @@ class ExoskeletonEnv(gym.Env):
         self.writer = None
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(15,), dtype=np.float32)
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
-        self.log_writer = SummaryWriter(save_path)
+        self.log_writer = log_writer
         
     async def step(self, action):
         return await asyncio.run(self.async_step(action))
