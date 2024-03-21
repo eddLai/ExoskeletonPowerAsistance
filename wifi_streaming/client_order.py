@@ -23,7 +23,7 @@ def analysis(data):
         
         if len(result) == 9:
             return np.array(result)
-    # print(f"Failed to analyze data: {data}")
+    print(f"Failed to analyze data: {data}")
     return np.zeros([9,])
 
 
