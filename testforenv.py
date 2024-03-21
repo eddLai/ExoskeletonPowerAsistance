@@ -2,12 +2,14 @@ import matplotlib.pyplot as plt
 import keyboard
 import asyncio
 from matplotlib.animation import FuncAnimation
+from tensorboardX import SummaryWriter
 from wifi_streaming import Env, client_order
 import numpy as np
 
 async def main():
     try:
-        env = Env.ExoskeletonEnv(device='cuda', save_path="runs/testforenv")
+        writer = SummaryWriter("runs/testforenv")
+        env = Env.ExoskeletonEnv(writer, device='cuda')
         state = await env.async_reset()
         done = False
         while not done:
@@ -15,9 +17,11 @@ async def main():
                 print("Exiting...")
                 break
             # action1 = np.random.uniform(-1, 1)
+            # action2 = np.random.uniform(-1, 1)
             action1 = 0
-            action2 = np.random.uniform(-1, 1)
+            action2 = 0
             state, reward, done, info = await env.async_step([action1,action2])
+            print("R_angle: ", state[0], "L_angle: ", state[3])
             await asyncio.sleep(0.05)
     finally:
         if not asyncio.get_running_loop().is_closed():

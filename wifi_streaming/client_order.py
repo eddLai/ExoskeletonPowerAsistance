@@ -23,7 +23,7 @@ def analysis(data):
         
         if len(result) == 9:
             return np.array(result)
-    # print(f"Failed to analyze data: {data}")
+    print(f"Failed to analyze data: {data}")
     return np.zeros([9,])
 
 
@@ -41,6 +41,7 @@ async def connect_FREEX(host='192.168.4.1', port=8080):
 async def get_INFO(reader, uri, bp_parameter, nt_parameter, lp_parameter):
     try:
         data = await reader.readuntil(separator=b'\n')
+        print("raw_data: ", data)
         data_str = data.decode('utf-8').strip()
         # print("raw data: ", data_str)
         analyzed_data = analysis(data_str)
@@ -72,7 +73,12 @@ async def if_not_safe(limit, angle, speed):
     else:
         return False
 
+last_action_was_zero = False
+
 async def send_action_to_exoskeleton_speed(writer, action, state):
+    global last_action_was_zero
+
+
     action[0] *= 10000
     action[1] *= 10000
     LIMIT = 75
@@ -82,9 +88,14 @@ async def send_action_to_exoskeleton_speed(writer, action, state):
     L_current = state[5]
     # print("action: ", action)
     # print("R: ",R_angle, "L: ", L_angle)
+
+    current_action_is_zero = action[0] == 0 and action[1] == 0
+    if (current_action_is_zero and last_action_was_zero):
+        return
+
     check_R = await if_not_safe(LIMIT, action[0], R_angle)
     check_L = await if_not_safe(LIMIT, action[1], L_angle)
-    if (check_R and check_L) or (action[0] == 0 and action[1] == 0):
+    if (check_R and check_L) or current_action_is_zero:
         # print("both aborted")
         await FREEX_CMD(writer, "E", "0", "E", "0")
     elif check_R or (action[0] == 0):
@@ -96,7 +107,9 @@ async def send_action_to_exoskeleton_speed(writer, action, state):
     else:
         # print("OK")
         await FREEX_CMD(writer, 'C', f"{action[0]}", 'C', f"{action[1]}")
-    # print("-----------------------------")
+
+    last_action_was_zero = current_action_is_zero
+    print("-----------------------------")
 
 async def send_action_to_exoskeleton(writer, action, state, control_type='speed'):
     if control_type == 'speed':
