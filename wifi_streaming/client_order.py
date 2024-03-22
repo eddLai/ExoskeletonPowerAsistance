@@ -38,13 +38,23 @@ async def connect_FREEX(host='192.168.4.1', port=8080):
     print(f"Successfully connected to {host}:{port}")
     return reader, writer
 
-async def get_INFO(reader, uri, bp_parameter, nt_parameter, lp_parameter):
+import asyncio
+
+async def read_line(reader):
     try:
         data = await reader.readuntil(separator=b'\n')
-        data_str = data.decode('utf-8').strip()
-        # print("raw data: ", data_str)
-        analyzed_data = analysis(data_str)
-        # print("analyzed: ", analyzed_data)
+        line = data.decode('ascii').rstrip('\n').rstrip('\r')
+        return line
+    except Exception as e:
+        print(f"Error reading line: {e}")
+        return None
+
+async def get_INFO(reader, uri, bp_parameter, nt_parameter, lp_parameter):
+    try:
+        info = await read_line(reader)
+        print("raw_data: ", info)
+        analyzed_data = analysis(info)
+        print("analyzed: ", analyzed_data)
         # analyzed_data = np.random.rand(9)
         # emg
         emg_observation, bp_parameter, nt_parameter, lp_parameter = await emgdata.read_specific_data_from_websocket(uri ,bp_parameter, nt_parameter, lp_parameter)
@@ -72,7 +82,12 @@ async def if_not_safe(limit, angle, speed):
     else:
         return False
 
+last_action_was_zero = False
+
 async def send_action_to_exoskeleton_speed(writer, action, state):
+    global last_action_was_zero
+
+
     action[0] *= 10000
     action[1] *= 10000
     LIMIT = 75
@@ -82,9 +97,14 @@ async def send_action_to_exoskeleton_speed(writer, action, state):
     L_current = state[5]
     # print("action: ", action)
     # print("R: ",R_angle, "L: ", L_angle)
+
+    current_action_is_zero = action[0] == 0 and action[1] == 0
+    if (current_action_is_zero and last_action_was_zero):
+        return
+
     check_R = await if_not_safe(LIMIT, action[0], R_angle)
     check_L = await if_not_safe(LIMIT, action[1], L_angle)
-    if (check_R and check_L) or (action[0] == 0 and action[1] == 0):
+    if (check_R and check_L) or current_action_is_zero:
         # print("both aborted")
         await FREEX_CMD(writer, "E", "0", "E", "0")
     elif check_R or (action[0] == 0):
@@ -96,7 +116,9 @@ async def send_action_to_exoskeleton_speed(writer, action, state):
     else:
         # print("OK")
         await FREEX_CMD(writer, 'C', f"{action[0]}", 'C', f"{action[1]}")
-    # print("-----------------------------")
+
+    last_action_was_zero = current_action_is_zero
+    print("-----------------------------")
 
 async def send_action_to_exoskeleton(writer, action, state, control_type='speed'):
     if control_type == 'speed':

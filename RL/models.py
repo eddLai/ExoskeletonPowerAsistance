@@ -50,7 +50,7 @@ class D4PGCritic(nn.Module):
         res = weights.sum(dim=1)
         return res.unsqueeze(dim=-1)
 
-class AgentD4PG(experience2.BaseAgent):
+class AgentD4PG(ptan.experience.BaseAgent):
     """
     Agent implementing noisy agent
     """

@@ -62,9 +62,8 @@ def main():
     client_socket = connect_FREEX()
     while True: 
         print(get_INFO(client_socket))
-        time.sleep(0.5)
         value = random.randint(-5, 5) * 1000
-        FREEX_CMD(client_socket, "A", "0", "C", f"{value}")
+        FREEX_CMD(client_socket, "E", "0", "C", f"{value}")
     # str = input("cmd_str:example X A 20 E 1\r\n\0")
     # for value in range(0, 8000, 1000):
     #     FREEX_CMD(client_socket, "A", "0", "C", f"{value}")
