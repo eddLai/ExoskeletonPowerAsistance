@@ -2,8 +2,11 @@ import socket
 import random
 import numpy as np
 import time
+import keyboard
 
-def FREEX_CMD(sock, mode1="A", value1="-5000", mode2="A", value2="-5000"):
+running = True
+
+def FREEX_CMD(sock, mode1="E", value1="0", mode2="E", value2="0"):
     cmd_str = f"X {mode1} {value1} {mode2} {value2}\r\n\0"
     cmd_bytes = cmd_str.encode('ascii')
     sock.send(cmd_bytes)
@@ -40,13 +43,39 @@ def new_read_line(sock):
     data = sock.recv(1024)
     if not data:
         return None
-    return data.decode('ascii').rstrip('\r\n')
+    return data.decode('ascii').rstrip('\r\n\0')
 
 def main():
     i = 0
     last_valid_data = np.zeros([9,])  # Initialize with zeros
     sock = connect_FREEX()
-    while True:
+    while not keyboard.is_pressed('q'):
+        info = new_read_line(sock)
+        if info is None or info == "":  # 检查是否收到空数据
+            print("Received empty data. Skipping command.")
+            continue  # 跳过当前循环迭代，不发送命令
+        # print("raw_data: ", info)
+        data, valid = analysis(info, last_valid_data)
+        if valid:
+            last_valid_data = data  # Update last valid data if current data is valid
+            print("R_angle", data[0], "L_angle", data[3])
+            value = random.randint(-5, 5) * 1000
+            FREEX_CMD(sock, "E", "0", "C", str(value))
+            print(f"done {i}")
+        else:
+            pass
+            # print("Invalid data received. Skipping command.")
+        i += 1
+
+    FREEX_CMD(sock)
+    sock.close()
+
+
+def old_main():
+    i = 0
+    last_valid_data = np.zeros([9,])  # Initialize with zeros
+    sock = connect_FREEX()
+    while not keyboard.is_pressed('q'):
         info = new_read_line(sock)
         if info is None:
             print("No more data. Exiting.")
@@ -61,6 +90,7 @@ def main():
         print(f"done {i}")
         i += 1
 
+    FREEX_CMD(sock)
     sock.close()
 
 if __name__ == "__main__":
