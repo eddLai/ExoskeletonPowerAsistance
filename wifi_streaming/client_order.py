@@ -1,8 +1,6 @@
-import asyncio
+import socket
 import numpy as np
-from EMG import emgdata
-import numpy as np
-import asyncio
+from EMG import emg_nonasync
 
 def analysis(data):
     result = []
@@ -22,61 +20,44 @@ def analysis(data):
                     continue
         
         if len(result) == 9:
-            return np.array(result)
-    print(f"Failed to analyze data: {data}")
-    return np.zeros([9,])
+            return np.array(result), True
+    # print(f"Failed to analyze data: {data}")
+    return np.zeros(9), False
 
-
-async def FREEX_CMD(writer, mode1="A", value1="-5000", mode2="A", value2="-5000"):
+def FREEX_CMD(sock, mode1="E", value1="0", mode2="E", value2="0"):
     cmd_str = f"X {mode1} {value1} {mode2} {value2}\r\n\0"
-    # print(f"Sending command: {cmd_str}")
-    writer.write(cmd_str.encode('ascii'))
-    await writer.drain()
+    cmd_bytes = cmd_str.encode('ascii')
+    sock.send(cmd_bytes)
 
-async def connect_FREEX(host='192.168.4.1', port=8080):
-    reader, writer = await asyncio.open_connection(host, port)
+def connect_FREEX(host='192.168.4.1', port=8080):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((host, port))
     print(f"Successfully connected to {host}:{port}")
-    return reader, writer
+    return sock
 
-import asyncio
-
-async def read_line(reader):
-    try:
-        data = await reader.readuntil(separator=b'\n')
-        line = data.decode('ascii').rstrip('\n').rstrip('\r')
-        return line
-    except Exception as e:
-        print(f"Error reading line: {e}")
+def read_line(sock):
+    data = sock.recv(1024)
+    if not data:
         return None
+    return data.decode('ascii').rstrip('\r\n\0')
 
-async def get_INFO(reader, uri, bp_parameter, nt_parameter, lp_parameter):
-    try:
-        info = await read_line(reader)
-        print("raw_data: ", info)
-        analyzed_data = analysis(info)
-        print("analyzed: ", analyzed_data)
-        # analyzed_data = np.random.rand(9)
-        # emg
-        emg_observation, bp_parameter, nt_parameter, lp_parameter = await emgdata.read_specific_data_from_websocket(uri ,bp_parameter, nt_parameter, lp_parameter)
-        return analyzed_data, emg_observation, bp_parameter, nt_parameter, lp_parameter
-    
-    except asyncio.IncompleteReadError as ex:
-        print(f"An error occurred: {ex}")
-        return np.zeros([9,]), np.zeros([6,]), bp_parameter, nt_parameter, lp_parameter
+def get_INFO(sock, uri, bp_parameter, nt_parameter, lp_parameter):
+    while True:
+        info = read_line(sock)
+        if info is None or info == "":
+            continue
+        # print("raw_data: ", info)  
+        analyzed_data, is_analyzed = analysis(info)
+        if is_analyzed:
+            break
+    # print("analyzed: ", analyzed_data)
+    # analyzed_data = np.random.rand(9)
+    # emg
+    emg_observation, bp_parameter, nt_parameter, lp_parameter = emg_nonasync.read_specific_data_from_websocket(uri ,bp_parameter, nt_parameter, lp_parameter)
 
-def check_if_safe(limit:int, angle, speed):
-    print(angle)
-    angle = int(angle)
-    if angle is None:
-        print("ur safe now (angle is None)")
-        return 0
-    elif (angle >= limit and speed > 0) or (angle <= -limit and speed < 0):
-        print("ur safe now")
-        return 0
-    else:
-        return speed
+    return analyzed_data, emg_observation, bp_parameter, nt_parameter, lp_parameter
 
-async def if_not_safe(limit, angle, speed):
+def if_not_safe(limit, angle, speed):
     if (angle >= limit and speed > 0) or (angle <= -limit and speed < 0):
         return True
     else:
@@ -84,10 +65,8 @@ async def if_not_safe(limit, angle, speed):
 
 last_action_was_zero = False
 
-async def send_action_to_exoskeleton_speed(writer, action, state):
+def send_action_to_exoskeleton_speed(writer, action, state):
     global last_action_was_zero
-
-
     action[0] *= 10000
     action[1] *= 10000
     LIMIT = 75
@@ -102,27 +81,27 @@ async def send_action_to_exoskeleton_speed(writer, action, state):
     if (current_action_is_zero and last_action_was_zero):
         return
 
-    check_R = await if_not_safe(LIMIT, action[0], R_angle)
-    check_L = await if_not_safe(LIMIT, action[1], L_angle)
+    check_R = if_not_safe(LIMIT, action[0], R_angle)
+    check_L = if_not_safe(LIMIT, action[1], L_angle)
     if (check_R and check_L) or current_action_is_zero:
         # print("both aborted")
-        await FREEX_CMD(writer, "E", "0", "E", "0")
+        FREEX_CMD(writer, "E", "0", "E", "0")
     elif check_R or (action[0] == 0):
         print("motor R: ", action[0], "\tangle: ", R_angle, "\tcurrent: ", R_current, "aborted")
-        await FREEX_CMD(writer, "E", "0", 'C', f"{action[1]}")
+        FREEX_CMD(writer, "E", "0", 'C', f"{action[1]}")
     elif check_L or (action[1] == 0):
         print("motor L: ", action[1], "\tangle: ", L_angle, "\tcurrent: ", L_current, "aborted")
-        await FREEX_CMD(writer, 'C', f"{action[0]}", "E", "0")
+        FREEX_CMD(writer, 'C', f"{action[0]}", "E", "0")
     else:
         # print("OK")
-        await FREEX_CMD(writer, 'C', f"{action[0]}", 'C', f"{action[1]}")
+        FREEX_CMD(writer, 'C', f"{action[0]}", 'C', f"{action[1]}")
 
     last_action_was_zero = current_action_is_zero
     print("-----------------------------")
 
-async def send_action_to_exoskeleton(writer, action, state, control_type='speed'):
+def send_action_to_exoskeleton(writer, action, state, control_type='speed'):
     if control_type == 'speed':
-        return await send_action_to_exoskeleton_speed(writer, action, state)
+        return send_action_to_exoskeleton_speed(writer, action, state)
     elif control_type == 'disable':
         pass
     else:
