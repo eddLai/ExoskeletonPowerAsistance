@@ -2,7 +2,7 @@ import numpy as np
 from scipy.signal import butter, lfilter, iirnotch, lfilter_zi
 import asyncio
 import aiohttp
-import websockets
+import websocket
 import json
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
@@ -10,23 +10,32 @@ import time
 import keyboard 
 import pandas as pd
 
-# stop_event = asyncio.Event()  # 控制无限循环的停止
-
-async def read_specific_data_from_websocket(uri, bp_parameter, nt_parameter, lp_parameter, max_retries=10):
+def read_specific_data_from_websocket(uri, bp_parameter, nt_parameter, lp_parameter,initial_max_min_rms_values,init_time):
         try:
-            async with websockets.connect(uri) as websocket:
-                while True:
-                    data = await websocket.recv()
-                    emg_array, bp_parameter, nt_parameter, lp_parameter = await process_data_from_websocket(data, bp_parameter, nt_parameter, lp_parameter)
-                    if emg_array.shape[0] != 0:
-                        #print(emg_array)
-                        #print(bp_parameter, nt_parameter, lp_parameter)
-                        return emg_array, bp_parameter, nt_parameter, lp_parameter
+            ws = websocket.WebSocket()
+            ws.connect(uri)
+            print("Press 'q' to quit...")
+            while True:
+                # 检查是否按下了 'q' 键
+                if keyboard.is_pressed('q'):
+                    print("Quitting...")
+                    break  # 跳出循环
+                data = ws.recv()
+                emg_array, bp_parameter, nt_parameter, lp_parameter = process_data_from_websocket(data, bp_parameter, nt_parameter, lp_parameter)
+                if emg_array.shape[0] != 0:
+                    #print(emg_array)
+                    #print(bp_parameter, nt_parameter, lp_parameter)                       
+                    init_time = init_time + 50  #len(new_emg_observation)
+                    emg_observation = np.sqrt(np.mean(emg_array**2, axis=1))
+                    reward, initial_max_min_rms_values = calculate_emg_level(emg_observation, initial_max_min_rms_values, init_time)
+                    print(f"reward:{reward}, EMG:{emg_observation}")
         except Exception as e:
             print(f"WebSocket error: {e}")
             pass
+        finally:
+            ws.close()
 
-async def process_data_from_websocket(data, bp_parameter, nt_parameter, lp_parameter):
+def process_data_from_websocket(data, bp_parameter, nt_parameter, lp_parameter):
     emg_values = np.zeros((6,50))
     j = 0
     try:
@@ -44,7 +53,7 @@ async def process_data_from_websocket(data, bp_parameter, nt_parameter, lp_param
                 emg_array = np.empty((6, 50))
                 for k in range(6):
                     #print("check2",emg_values[k],bp_parameter[k], nt_parameter[k], lp_parameter[k])
-                    emg_array[k], bp_parameter[k], nt_parameter[k], lp_parameter[k] = await process_emg_signal(emg_values[k],bp_parameter[k], nt_parameter[k], lp_parameter[k])
+                    emg_array[k], bp_parameter[k], nt_parameter[k], lp_parameter[k] = process_emg_signal(emg_values[k],bp_parameter[k], nt_parameter[k], lp_parameter[k])
                     #print("check5",emg_values[k],bp_parameter[k], nt_parameter[k], lp_parameter[k])
                 return emg_array, bp_parameter, nt_parameter, lp_parameter
             except Exception as e:
@@ -95,7 +104,7 @@ def lowpass_filter(data, cutoff, fs, lp_filter_state, order=4):
     return y, lp_filter_state
 
 # 实时信号处理函数
-async def process_emg_signal(data, bp_parameter, nt_parameter, lp_parameter, fs=1000):
+def process_emg_signal(data, bp_parameter, nt_parameter, lp_parameter, fs=1000):
     #print("check3",data, bp_parameter, nt_parameter, lp_parameter)
     # 带通滤波
     bandpassed, bp_parameter = bandpass_filter(data, 20, 450, fs, bp_parameter)
@@ -107,9 +116,10 @@ async def process_emg_signal(data, bp_parameter, nt_parameter, lp_parameter, fs=
     # 低通滤波提取包络
     enveloped, lp_parameter = lowpass_filter(rectified, 10, fs, lp_parameter)
     #print(enveloped)
+    #print(bp_parameter, nt_parameter, lp_parameter)
     return enveloped, bp_parameter, nt_parameter, lp_parameter
 # 以下為肌力回饋
-async def calculate_emg_level(data, initial_max_min_rms_values, times):
+def calculate_emg_level(data, initial_max_min_rms_values, times):
 
     #前1秒為暖機
     if times <= 1000:
@@ -132,30 +142,6 @@ async def calculate_emg_level(data, initial_max_min_rms_values, times):
             reward[i] = map_to_levels(rms_values, initial_max_min_rms_values[i])
             y = y + reward[i]
         return y, initial_max_min_rms_values
-
-# async def calculate_emg_level(data, initial_max_min_rms_values, times):
-
-#     #前1秒為暖機
-#     if times <= 1000:
-#         return 0, initial_max_min_rms_values
-#     # 使用第1秒到第10秒的数据来确定初始的最小、最大RMS值
-#     elif 1000 < times <= 10000:
-#         for i in range(6):
-#             rms_values = calculate_rms(data[i])
-#             if initial_max_min_rms_values[i][0] == 0 or rms_values > initial_max_min_rms_values[i][0]:
-#                 initial_max_min_rms_values[i][0] = rms_values
-#             elif initial_max_min_rms_values[i][1] == 0 or rms_values < initial_max_min_rms_values[i][1]:
-#                 initial_max_min_rms_values[i][1] = rms_values
-#         return 0, initial_max_min_rms_values
-#     #每0.05秒傳出reward值
-#     else:
-#         reward = np.array(6)
-#         y = 0
-#         for i in range(6):
-#             rms_values = calculate_rms(data[i])
-#             reward[i] = map_to_levels(rms_values, initial_max_min_rms_values[i])
-#             y = y + reward[i]
-#         return y, initial_max_min_rms_values
 
 def calculate_rms(signal):
     """计算信号的RMS值。"""
@@ -180,19 +166,17 @@ def map_to_levels(value, max_min_rms_values):
         normalized_value = (value - max_min_rms_values[1]) / (max_min_rms_values[0] - max_min_rms_values[1])
         return int(round(normalized_value * (-10))) + 5
 
-# def on_press_key(e):
-#     if e.name == 'esc':  # 如果按下的是'p'键p
-#         stop_event.set()  # 设置停止事件
-#         print("Stop event set, exiting...")
+def main():
+    websocket_uri = "ws://localhost:31278/ws"
 
-# async def main():
-#     websocket_uri = "ws://localhost:31278/ws"
-    
-#     # 在新的线程中监听键盘事件
-#     keyboard.on_press(on_press_key)
+    bp_parameter = np.zeros((6,8))
+    nt_parameter = np.zeros((6,2))
+    lp_parameter = np.zeros((6,4))
+    initial_max_min_rms_values = np.zeros((6,2))
+    init_time = 0
 
-#     await read_specific_data_from_websocket(websocket_uri)
+    read_specific_data_from_websocket(websocket_uri,bp_parameter, nt_parameter, lp_parameter,initial_max_min_rms_values,init_time)
 
-# if __name__ == "__main__":
-#     asyncio.run(main())
+if __name__ == "__main__":
+    main()
 

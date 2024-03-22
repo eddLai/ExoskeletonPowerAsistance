@@ -41,38 +41,20 @@ async def connect_FREEX(host='192.168.4.1', port=8080):
 import asyncio
 
 async def read_line(reader):
-    """
-    读取直到遇到换行符的数据，并返回处理后的行。
-    :param reader: asyncio.StreamReader的实例，用于异步读取数据。
-    :return: 处理后的行数据（不包含换行符）。
-    """
     try:
-        # 读取数据直到遇到换行符
         data = await reader.readuntil(separator=b'\n')
-        # 将字节数据解码为字符串，假设使用UTF-8编码，根据实际情况调整
-        line = data.decode('utf-8').rstrip('\n').rstrip('\r')
+        line = data.decode('ascii').rstrip('\n').rstrip('\r')
         return line
-    except asyncio.IncompleteReadError as e:
-        # 如果在数据流结束前没有遇到换行符，处理剩余的数据
-        line = e.partial.decode('utf-8').rstrip('\n').rstrip('\r')
-        if line:
-            return line
-        else:
-            # 如果没有剩余的数据，返回None表示读取结束
-            return None
     except Exception as e:
-        # 处理其他可能的异常
         print(f"Error reading line: {e}")
         return None
 
 async def get_INFO(reader, uri, bp_parameter, nt_parameter, lp_parameter):
     try:
-        data = await read_line(reader)
-        print("raw_data: ", data)
-        data_str = data.decode('utf-8').strip()
-        # print("raw data: ", data_str)
-        analyzed_data = analysis(data_str)
-        # print("analyzed: ", analyzed_data)
+        info = await read_line(reader)
+        print("raw_data: ", info)
+        analyzed_data = analysis(info)
+        print("analyzed: ", analyzed_data)
         # analyzed_data = np.random.rand(9)
         # emg
         emg_observation, bp_parameter, nt_parameter, lp_parameter = await emgdata.read_specific_data_from_websocket(uri ,bp_parameter, nt_parameter, lp_parameter)
