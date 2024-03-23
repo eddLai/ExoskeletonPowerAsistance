@@ -17,11 +17,12 @@ class ExoskeletonEnv(gym.Env):
         self.port = port
         self.uri = url
         self.observation = np.zeros(9)
-        self.emg_observation = np.zeros(6)
-        self.bp_parameter = np.zeros((6,8))
-        self.nt_parameter = np.zeros((6,2))
-        self.lp_parameter = np.zeros((6,4))
-        self.initial_max_min_rms_values = np.zeros((6,2))
+        self.emg_observation = np.zeros(8)
+        self.filtered_emg_observation = np.zeros((8,50))
+        self.bp_parameter = np.zeros((8,8))
+        self.nt_parameter = np.zeros((8,2))
+        self.lp_parameter = np.zeros((8,4))
+        self.initial_max_min_rms_values = np.zeros((8,2))
         self.current_step = 0
         self.init_time = 0
         self.reward = 0
@@ -32,8 +33,8 @@ class ExoskeletonEnv(gym.Env):
     
     def step(self, action):
         # 改回用send_action_to_exoskeleton_speed函數
-        self.observation, filtered_emg_observation, self.bp_parameter, self.nt_parameter, self.lp_parameter = client_order.get_INFO(self.sock, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
-        self.emg_observation = np.sqrt(np.mean(filtered_emg_observation**2, axis=1))
+        self.observation, self.filtered_emg_observation, self.bp_parameter, self.nt_parameter, self.lp_parameter = client_order.get_INFO(self.sock, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
+        self.emg_observation = np.sqrt(np.mean(self.filtered_emg_observation**2, axis=1))
 
         if self.init_time <= 10000:
             self.init_time = self.init_time + 50  #len(new_emg_observation)
@@ -77,5 +78,8 @@ class ExoskeletonEnv(gym.Env):
         self.log_writer.add_scalars('Joint/Current', {'Joint1': self.observation[2], 'Joint2': self.observation[5]}, self.current_step)
         self.log_writer.add_scalars('IMU', {'Roll': self.observation[6], 'Pitch': self.observation[7], 'Yaw':self.observation[8]}, self.current_step)
         self.log_writer.add_scalar('Reward', self.reward, self.current_step)
+        filtered_emg_step = self.current_step*50
         for i in range(self.emg_observation.shape[0]):
+            for j in range(50):
+                self.log_writer.add_scalar(f'Filtered_EMG/Channel{i+1}', self.filtered_emg_observation[i][j], filtered_emg_step+j)
             self.log_writer.add_scalar(f'sqrted EMG/Channel_{i+1}', self.emg_observation[i], self.current_step)
