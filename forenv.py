@@ -7,7 +7,7 @@ import numpy as np
 
 def main():
     try:
-        writer = SummaryWriter("runs/recording_EXO_with_no__asisstance")
+        writer = SummaryWriter("runs/recording_EXO_newEMG_plot")
         env = Env.ExoskeletonEnv(writer, device='cuda')
         state = env.reset()
         print("reset")

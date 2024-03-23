@@ -76,7 +76,7 @@ def send_action_to_exoskeleton_speed(writer, action, state):
     global last_action_was_zero
     action[0] *= 10000
     action[1] *= 10000
-    LIMIT = 20
+    LIMIT = 35
     CURRENT_LIMIT = 50000
     R_angle = state[0]
     L_angle = state[3]
