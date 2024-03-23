@@ -18,7 +18,7 @@ BATCH_SIZE = 64
 LEARNING_RATE = 1e-3
 MOMENTUM = 0.9
 REPLAY_SIZE = 100000
-REPLAY_INITIAL = 10000
+REPLAY_INITIAL = 10
 REWARD_STEPS = 5
 
 OBSERVATION_DIMS = 15
@@ -55,7 +55,7 @@ def distr_projection(next_distr_v, rewards_v, dones_mask_t,
     # since we can't really computing tensor on cuda with numpy
     next_distr = next_distr_v.data.cpu().numpy()
     rewards = rewards_v.data.cpu().numpy()
-    dones_mask = dones_mask_t.cpu().numpy().astype(np.bool)
+    dones_mask = dones_mask_t.cpu().numpy().astype(np.bool_)
     batch_size = len(rewards)
     proj_distr = np.zeros((batch_size, N_ATOMS), dtype=np.float32)
 
@@ -175,9 +175,10 @@ if __name__ == "__main__":
 
                 if frame_idx % TEST_ITERS == 0:
                     print("Please prepare for a test phase by changing the exoskeleton user, if desired.")
+                    env.reset()
                     input("Press Enter to continue after the user has been changed and is ready...")
                     ts = time.time()
-                    rewards, steps = test_net(act_net, env,count=100, device=device)
+                    rewards, steps = test_net(act_net, env, count=100, device=device)
                     print("Test done in %.2f sec, reward %.3f, steps %d" % (
                         time.time() - ts, rewards, steps))
                     writer.add_scalar("test_reward", rewards, frame_idx)
@@ -189,4 +190,4 @@ if __name__ == "__main__":
                             fname = os.path.join(save_path, name)
                             torch.save(act_net.state_dict(), fname)
                         best_reward = rewards
-                time.sleep(0.01)
+                time.sleep(0.001)

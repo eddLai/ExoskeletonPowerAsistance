@@ -9,4 +9,4 @@ test*.ipynb
 *.code-workspace
 venv/
 venv_2/
-runs/
+runs/test*

@@ -69,12 +69,15 @@ def if_not_safe(limit, angle, speed):
         return False
 
 last_action_was_zero = False
+left_disabled = False
+right_disabled = False
 
 def send_action_to_exoskeleton_speed(writer, action, state):
     global last_action_was_zero
     action[0] *= 10000
     action[1] *= 10000
     LIMIT = 20
+    CURRENT_LIMIT = 50000
     R_angle = state[0]
     L_angle = state[3]
     R_current = state[2]
@@ -84,8 +87,8 @@ def send_action_to_exoskeleton_speed(writer, action, state):
     if (current_action_is_zero and last_action_was_zero):
         return
 
-    check_R = if_not_safe(LIMIT, action[0], R_angle)
-    check_L = if_not_safe(LIMIT, action[1], L_angle)
+    check_R = if_not_safe(LIMIT, action[0], R_angle) or R_current > CURRENT_LIMIT
+    check_L = if_not_safe(LIMIT, action[1], L_angle) or L_current > CURRENT_LIMIT
     if (check_R and check_L) or current_action_is_zero:
         # print("both aborted")
         FREEX_CMD(writer, "E", "0", "E", "0")

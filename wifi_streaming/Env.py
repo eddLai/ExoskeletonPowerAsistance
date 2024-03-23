@@ -32,7 +32,6 @@ class ExoskeletonEnv(gym.Env):
     
     def step(self, action):
         # 改回用send_action_to_exoskeleton_speed函數
-        # await client_order.FREEX_CMD(self.writer, "C", action[0], "C", action[1])
         self.observation, filtered_emg_observation, self.bp_parameter, self.nt_parameter, self.lp_parameter = client_order.get_INFO(self.sock, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
         self.emg_observation = np.sqrt(np.mean(filtered_emg_observation**2, axis=1))
 
@@ -53,7 +52,7 @@ class ExoskeletonEnv(gym.Env):
         print("disconnect")
         self.sock= client_order.connect_FREEX(self.host, self.port)
         print("re-connected")
-        time.sleep(5)
+        time.sleep(2)
         client_order.FREEX_CMD(self.sock, "A", "0000", "A", "0000")
         print("reset to angle, be relaxed")
         time.sleep(5)

@@ -7,7 +7,7 @@ import numpy as np
 
 def main():
     try:
-        writer = SummaryWriter("runs/testforenv3")
+        writer = SummaryWriter("runs/recording_EXO_with_no__asisstance")
         env = Env.ExoskeletonEnv(writer, device='cuda')
         state = env.reset()
         print("reset")
@@ -16,11 +16,13 @@ def main():
             if keyboard.is_pressed('q'):
                 print("Exiting...")
                 break
-            action1 = np.random.uniform(-1, 1)
-            action2 = np.random.uniform(-1, 1)
+            # action1 = np.random.uniform(-1, 1)
+            # action2 = np.random.uniform(-1, 1)
+            action1 = 0
+            action2 = 0
             state, reward, done, info = env.step([action1,action2])
             print("R_angle: ", state[0], "L_angle: ", state[3],"reward: ",reward)
-            time.sleep(0.01)
+            time.sleep(0.001)
     finally:
         client_order.FREEX_CMD(env.sock, "E", "0", "E", "0")
         print("disconnect")
