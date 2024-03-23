@@ -24,7 +24,7 @@ class ExoskeletonEnv(gym.Env):
         self.current_step = 0
         self.init_time = 0
         self.reward = 0
-        self.sock = None
+        self.sock = client_order.connect_FREEX(self.host, self.port)
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(15,), dtype=np.float32)
         self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
         self.log_writer = log_writer
@@ -67,7 +67,7 @@ class ExoskeletonEnv(gym.Env):
     def render(self, mode='human', close=False):
         self.log_writer.add_scalars('Joint/Angle', {'Joint1': self.observation[0], 'Joint2': self.observation[3]}, self.current_step)
         self.log_writer.add_scalars('Joint/Velocity', {'Joint1': self.observation[1], 'Joint2': self.observation[4]}, self.current_step)
-        self.log_writer.add_scalars('Joint/Acceleration', {'Joint1': self.observation[2], 'Joint2': self.observation[5]}, self.current_step)
+        self.log_writer.add_scalars('Joint/Current', {'Joint1': self.observation[2], 'Joint2': self.observation[5]}, self.current_step)
         self.log_writer.add_scalars('IMU', {'Roll': self.observation[6], 'Pitch': self.observation[7], 'Yaw':self.observation[8]}, self.current_step)
         self.log_writer.add_scalar('Reward', self.reward, self.current_step)
         for i in range(self.emg_observation.shape[0]):

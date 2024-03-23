@@ -5,9 +5,9 @@ from wifi_streaming import Env, client_order
 
 def main():
     try:
-        writer = SummaryWriter("runs/testforenv")
+        writer = SummaryWriter("runs/testforenv2")
         env = Env.ExoskeletonEnv(writer, device='cuda')
-        state = env.reset()
+        # state = env.reset()
         done = False
         while not done:
             if keyboard.is_pressed('q'):

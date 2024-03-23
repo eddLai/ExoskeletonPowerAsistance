@@ -154,7 +154,7 @@ def map_to_levels(value, max_min_rms_values):
 #     initial_max_min_rms_values = np.zeros((6,2))
 #     init_time = 0
 
-#     read_specific_data_from_websocket(websocket_uri,bp_parameter, nt_parameter, lp_parameter,initial_max_min_rms_values,init_time)
+#     read_specific_data_from_websocket(websocket_uri,bp_parameter, nt_parameter, lp_parameter)
 
 # if __name__ == "__main__":
 #     main()
