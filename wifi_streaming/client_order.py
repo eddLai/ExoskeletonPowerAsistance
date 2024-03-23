@@ -39,7 +39,12 @@ def read_line(sock):
     data = sock.recv(1024)
     if not data:
         return None
-    return data.decode('ascii').rstrip('\r\n\0')
+    try:
+        data = data.decode('ascii').rstrip('\r\n\0')
+        return data
+    except UnicodeDecodeError as e:
+        print(f"Error decoding data: {e}")
+        return None
 
 def get_INFO(sock, uri, bp_parameter, nt_parameter, lp_parameter):
     while True:
@@ -69,14 +74,12 @@ def send_action_to_exoskeleton_speed(writer, action, state):
     global last_action_was_zero
     action[0] *= 10000
     action[1] *= 10000
-    LIMIT = 75
+    LIMIT = 20
     R_angle = state[0]
     L_angle = state[3]
     R_current = state[2]
     L_current = state[5]
-    # print("action: ", action)
-    # print("R: ",R_angle, "L: ", L_angle)
-
+    print(state)
     current_action_is_zero = action[0] == 0 and action[1] == 0
     if (current_action_is_zero and last_action_was_zero):
         return

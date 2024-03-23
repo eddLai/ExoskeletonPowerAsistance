@@ -5,6 +5,7 @@ import gym
 from gym import spaces
 import numpy as np
 from tensorboardX import SummaryWriter
+import time
 
 class ExoskeletonEnv(gym.Env):
     metadata = {'render.modes': ['human']}
@@ -46,13 +47,20 @@ class ExoskeletonEnv(gym.Env):
         return np.concatenate([self.observation, self.emg_observation], axis=0), self.reward, done, {}
     
     def reset(self):
-        # Properly handle async connection in reset
         if self.sock is not None:
             self.sock.close()
+            self.sock = None
+        print("disconnect")
         self.sock= client_order.connect_FREEX(self.host, self.port)
+        print("re-connected")
+        time.sleep(5)
+        client_order.FREEX_CMD(self.sock, "A", "0000", "A", "0000")
+        print("reset to angle, be relaxed")
+        time.sleep(5)
         client_order.FREEX_CMD(self.sock, "E", "0", "E", "0")
         self.observation, self.emg_observation, self.bp_parameter, self.nt_parameter, self.lp_parameter = client_order.get_INFO(self.sock, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
         self.emg_observation = np.sqrt(np.mean(self.emg_observation**2, axis=1))
+        print("first data recv")
         return np.concatenate([self.observation, self.emg_observation], axis=0)  #self.emg_observation的格式
         # return np.zeros(15)
 

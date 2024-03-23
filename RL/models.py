@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from RL import experience2
+from RL import experience_async
 
 HID_SIZE = 20
 
@@ -59,7 +59,7 @@ class AgentD4PG(ptan.experience.BaseAgent):
         self.device = device
         self.epsilon = epsilon
 
-    async def __call__(self, states, agent_states):
+    def __call__(self, states, agent_states):
         states_v = ptan.agent.float32_preprocessor(states)
         states_v = states_v.to(self.device)
         mu_v = self.net(states_v)

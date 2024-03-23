@@ -24,7 +24,7 @@ REWARD_STEPS = 5
 OBSERVATION_DIMS = 15
 ACTION_DIMS = 2
 
-TEST_ITERS = 1000
+TEST_ITERS = 1
 
 Vmax = 10
 Vmin = -10
@@ -113,8 +113,7 @@ if __name__ == "__main__":
     tgt_crt_net = ptan.agent.TargetNet(crt_net)
 
     writer = SummaryWriter(comment="-d4pg_" + args.name)
-    env = Env.ExoskeletonEnv(writer)
-    test_env = Env.ExoskeletonEnv(log_writer=writer)
+    env = Env.ExoskeletonEnv(log_writer=writer)
     agent = models.AgentD4PG(act_net, device=device)
     exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
     buffer = ptan.experience.ExperienceReplayBuffer(exp_source, buffer_size=REPLAY_SIZE)
@@ -175,8 +174,10 @@ if __name__ == "__main__":
                 tgt_crt_net.alpha_sync(alpha=1 - 1e-3)
 
                 if frame_idx % TEST_ITERS == 0:
+                    print("Please prepare for a test phase by changing the exoskeleton user, if desired.")
+                    input("Press Enter to continue after the user has been changed and is ready...")
                     ts = time.time()
-                    rewards, steps = test_net(act_net, test_env, device=device)
+                    rewards, steps = test_net(act_net, env,count=100, device=device)
                     print("Test done in %.2f sec, reward %.3f, steps %d" % (
                         time.time() - ts, rewards, steps))
                     writer.add_scalar("test_reward", rewards, frame_idx)
@@ -188,5 +189,4 @@ if __name__ == "__main__":
                             fname = os.path.join(save_path, name)
                             torch.save(act_net.state_dict(), fname)
                         best_reward = rewards
-
-    pass
+                time.sleep(0.01)
