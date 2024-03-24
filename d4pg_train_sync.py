@@ -145,6 +145,7 @@ if __name__ == "__main__":
                         continue
                     if len(buffer) == REPLAY_INITIAL:
                         print("Initialization of the buffer is finished, start training...")
+                        input("Press Enter to continue...")
 
                     batch = buffer.sample(BATCH_SIZE)
                     states_v, actions_v, rewards_v, \
@@ -187,7 +188,7 @@ if __name__ == "__main__":
                         print("Please prepare for a test phase by changing the exoskeleton user, if desired.")
                         input("Press Enter to continue after the user has been changed and is ready...")
                         ts = time.time()
-                        rewards, steps = test_net(act_net, env, count=100, device=device)
+                        rewards, steps = test_net(act_net, env, count=10, device=device)
                         print("Test done in %.2f sec, reward %.3f, steps %d" % (
                             time.time() - ts, rewards, steps))
                         writer.add_scalar("test_reward", rewards, frame_idx)
