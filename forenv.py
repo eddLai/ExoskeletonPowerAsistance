@@ -9,7 +9,7 @@ def main():
     try:
         writer = SummaryWriter("runs/recording_EXO_newEMG_plot")
         env = Env.ExoskeletonEnv(writer, device='cuda')
-        state = env.reset()
+        state = env.reset(is_recording=False)
         print("reset")
         done = False
         while not done:
@@ -17,16 +17,13 @@ def main():
                 print("Exiting...")
                 break
             # action1 = np.random.uniform(-1, 1)
-            # action2 = np.random.uniform(-1, 1)
+            action2 = np.random.uniform(-1, 1)
             action1 = 0
-            action2 = 0
+            # action2 = 0
             state, reward, done, info = env.step([action1,action2])
-            print("R_angle: ", state[0], "L_angle: ", state[3],"reward: ",reward)
-            time.sleep(0.001)
+            time.sleep(0.01)
     finally:
-        client_order.FREEX_CMD(env.sock, "E", "0", "E", "0")
-        print("disconnect")
-        env.log_writer.close()
+        env.close()
 
 if __name__ == "__main__":
     main()
