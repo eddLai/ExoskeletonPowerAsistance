@@ -7,6 +7,18 @@ import numpy as np
 from tensorboardX import SummaryWriter
 import time
 
+channel_names = [
+    'Tibialis_anterior_right',  # 通道1: 右腿脛前肌
+    'Rectus Femoris_right',     # 通道2: 右腿股直肌
+    'Biceps_femoris_right',     # 通道3: 右腿股二頭肌
+    'Gastrocnemius_right',      # 通道4: 右腿腓腸肌
+    'Tibialis_anterior_left',   # 通道5: 左腿脛前肌
+    'Rectus Femoris_left',      # 通道6: 左腿股直肌
+    'Biceps_femoris_left',      # 通道7: 左腿股二頭肌
+    'Gastrocnemius_left'        # 通道8: 左腿腓腸肌
+]
+
+
 class ExoskeletonEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
@@ -81,5 +93,5 @@ class ExoskeletonEnv(gym.Env):
         filtered_emg_step = self.current_step*50
         for i in range(self.emg_observation.shape[0]):
             for j in range(50):
-                self.log_writer.add_scalar(f'Filtered_EMG/Channel{i+1}', self.filtered_emg_observation[i][j], filtered_emg_step+j)
-            self.log_writer.add_scalar(f'sqrted EMG/Channel_{i+1}', self.emg_observation[i], self.current_step)
+                self.log_writer.add_scalar(f'Filtered_EMG/{channel_names[i]}', self.filtered_emg_observation[i][j], filtered_emg_step+j)
+            self.log_writer.add_scalar(f'sqrted EMG/Channel_{channel_names[i]}', self.emg_observation[i], self.current_step)
