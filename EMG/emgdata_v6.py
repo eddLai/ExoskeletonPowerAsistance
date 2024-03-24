@@ -162,7 +162,7 @@ def map_to_levels(value, min_rms_values, max_rms_values):
     
     if value <= min_rms_values:
         # 计算低于min_rms_values的值应映射到哪个级别
-        level_diff = (value - min_rms_values) / level_range
+        level_diff = (min_rms_values-value) / level_range
         return 5 + level_diff
     elif value >= max_rms_values:
         # 计算高于max_rms_values的值应映射到哪个级别
