@@ -18,7 +18,7 @@ BATCH_SIZE = 64
 LEARNING_RATE = 1e-3
 MOMENTUM = 0.9
 REPLAY_SIZE = 100000
-REPLAY_INITIAL = 10
+REPLAY_INITIAL = 100
 REWARD_STEPS = 5 # 3~10
 
 OBSERVATION_DIMS = 15
@@ -124,74 +124,97 @@ if __name__ == "__main__":
 
     frame_idx = 0
     best_reward = None
-    with ptan.common.utils.RewardTracker(writer) as tracker:
-        with ptan.common.utils.TBMeanTracker(writer, batch_size=10) as tb_tracker:
-            while True:
-                frame_idx += 1
-                buffer.populate(1)
-                rewards_steps = exp_source.pop_rewards_steps()
-                if rewards_steps:
-                    rewards, steps = zip(*rewards_steps)
-                    tb_tracker.track("episode_steps", steps[0], frame_idx)
-                    tracker.reward(rewards[0], frame_idx)
+    training_stopped_early = False
+    try:
+        with ptan.common.utils.RewardTracker(writer) as tracker:
+            with ptan.common.utils.TBMeanTracker(writer, batch_size=10) as tb_tracker:
+                while True:
+                    if keyboard.is_pressed('q'):
+                        print("Training stopped by user.")
+                        training_stopped_early = True
+                        break
+                    frame_idx += 1
+                    buffer.populate(1)
+                    rewards_steps = exp_source.pop_rewards_steps()
+                    if rewards_steps:
+                        rewards, steps = zip(*rewards_steps)
+                        tb_tracker.track("episode_steps", steps[0], frame_idx)
+                        tracker.reward(rewards[0], frame_idx)
 
-                if len(buffer) < REPLAY_INITIAL:
-                    continue
-                if len(buffer) == REPLAY_INITIAL:
-                    print("Initialization of the buffer is finished, start training...")
+                    if len(buffer) < REPLAY_INITIAL:
+                        continue
+                    if len(buffer) == REPLAY_INITIAL:
+                        print("Initialization of the buffer is finished, start training...")
 
-                batch = buffer.sample(BATCH_SIZE)
-                states_v, actions_v, rewards_v, \
-                dones_mask, last_states_v = \
-                    models.unpack_batch(batch, device)
+                    batch = buffer.sample(BATCH_SIZE)
+                    states_v, actions_v, rewards_v, \
+                    dones_mask, last_states_v = \
+                        models.unpack_batch(batch, device)
 
-                # train critic
-                crt_opt.zero_grad()
-                crt_distr_v = crt_net(states_v, actions_v)
-                last_act_v = tgt_act_net.target_model(
-                    last_states_v)
-                last_distr_v = F.softmax(
-                    tgt_crt_net.target_model(
-                        last_states_v, last_act_v), dim=1)
-                proj_distr_v = distr_projection(
-                    last_distr_v, rewards_v, dones_mask,
-                    gamma=GAMMA**REWARD_STEPS, device=device)
-                prob_dist_v = -F.log_softmax(
-                    crt_distr_v, dim=1) * proj_distr_v
-                critic_loss_v = prob_dist_v.sum(dim=1).mean()
-                critic_loss_v.backward()
-                crt_opt.step()
-                tb_tracker.track("loss_critic", critic_loss_v, frame_idx)
+                    # train critic
+                    crt_opt.zero_grad()
+                    crt_distr_v = crt_net(states_v, actions_v)
+                    last_act_v = tgt_act_net.target_model(
+                        last_states_v)
+                    last_distr_v = F.softmax(
+                        tgt_crt_net.target_model(
+                            last_states_v, last_act_v), dim=1)
+                    proj_distr_v = distr_projection(
+                        last_distr_v, rewards_v, dones_mask,
+                        gamma=GAMMA**REWARD_STEPS, device=device)
+                    prob_dist_v = -F.log_softmax(
+                        crt_distr_v, dim=1) * proj_distr_v
+                    critic_loss_v = prob_dist_v.sum(dim=1).mean()
+                    critic_loss_v.backward()
+                    crt_opt.step()
+                    tb_tracker.track("loss_critic", critic_loss_v, frame_idx)
 
-                # train actor
-                act_opt.zero_grad()
-                cur_actions_v = act_net(states_v)
-                crt_distr_v = crt_net(states_v, cur_actions_v)
-                actor_loss_v = -crt_net.distr_to_q(crt_distr_v)
-                actor_loss_v = actor_loss_v.mean()
-                actor_loss_v.backward()
-                act_opt.step()
-                tb_tracker.track("loss_actor", actor_loss_v,
-                                 frame_idx)
+                    # train actor
+                    act_opt.zero_grad()
+                    cur_actions_v = act_net(states_v)
+                    crt_distr_v = crt_net(states_v, cur_actions_v)
+                    actor_loss_v = -crt_net.distr_to_q(crt_distr_v)
+                    actor_loss_v = actor_loss_v.mean()
+                    actor_loss_v.backward()
+                    act_opt.step()
+                    tb_tracker.track("loss_actor", actor_loss_v,
+                                    frame_idx)
 
-                tgt_act_net.alpha_sync(alpha=1 - 1e-3)
-                tgt_crt_net.alpha_sync(alpha=1 - 1e-3)
+                    tgt_act_net.alpha_sync(alpha=1 - 1e-3)
+                    tgt_crt_net.alpha_sync(alpha=1 - 1e-3)
 
-                if frame_idx % TEST_ITERS == 0:
-                    print("Please prepare for a test phase by changing the exoskeleton user, if desired.")
-                    env.reset()
-                    input("Press Enter to continue after the user has been changed and is ready...")
-                    ts = time.time()
-                    rewards, steps = test_net(act_net, env, count=10, device=device)
-                    print("Test done in %.2f sec, reward %.3f, steps %d" % (
-                        time.time() - ts, rewards, steps))
-                    writer.add_scalar("test_reward", rewards, frame_idx)
-                    writer.add_scalar("test_steps", steps, frame_idx)
-                    if best_reward is None or best_reward < rewards:
-                        if best_reward is not None:
-                            print("Best reward updated: %.3f -> %.3f" % (best_reward, rewards))
-                            name = "best_%+.3f_%d.dat" % (rewards, frame_idx)
-                            fname = os.path.join(save_path, name)
-                            torch.save(act_net.state_dict(), fname)
-                        best_reward = rewards
-                time.sleep(0.001)
+                    if frame_idx % TEST_ITERS == 0:
+                        print("Please prepare for a test phase by changing the exoskeleton user, if desired.")
+                        input("Press Enter to continue after the user has been changed and is ready...")
+                        ts = time.time()
+                        rewards, steps = test_net(act_net, env, count=100, device=device)
+                        print("Test done in %.2f sec, reward %.3f, steps %d" % (
+                            time.time() - ts, rewards, steps))
+                        writer.add_scalar("test_reward", rewards, frame_idx)
+                        writer.add_scalar("test_steps", steps, frame_idx)
+                        if best_reward is None or best_reward < rewards:
+                            if best_reward is not None:
+                                print("Best reward updated: %.3f -> %.3f" % (best_reward, rewards))
+                                name = "best_%+.3f_%d.dat" % (rewards, frame_idx)
+                                fname = os.path.join(save_path, name)
+                                torch.save(act_net.state_dict(), fname)
+                            best_reward = rewards
+                    time.sleep(0.001)
+    except KeyboardInterrupt:
+        print("Training interrupted by keyboard.")
+    
+    finally:
+        if best_reward is None:
+            print("No best reward achieved during the training.")
+        elif training_stopped_early:
+            print(f"Training stopped early. Best reward achieved: {best_reward:.3f}")
+        else:
+            print(f"Training completed. Best reward achieved: {best_reward:.3f}")
+
+        try:
+            env.reset()
+            env.sock.close()
+            print("disconnect")
+            env.log_writer.close()
+        except Exception as e:
+            print(f"Error while closing resources: {e}")
