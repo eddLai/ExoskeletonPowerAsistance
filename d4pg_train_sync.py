@@ -19,12 +19,13 @@ LEARNING_RATE = 1e-3
 MOMENTUM = 0.9
 REPLAY_SIZE = 100000
 REPLAY_INITIAL = 10
-REWARD_STEPS = 5
+REWARD_STEPS = 5 # 3~10
 
 OBSERVATION_DIMS = 15
 ACTION_DIMS = 2
 
-TEST_ITERS = 1
+TEST_ITERS = 10000 # determines when training stop for a while
+MAX_STEPS_FOR_TEST = 1000
 
 Vmax = 10
 Vmin = -10
@@ -45,7 +46,8 @@ def test_net(net, env, count=10, device="cpu"):
             obs, reward, done, _ = env.step(action)
             rewards += reward
             steps += 1
-            if done:
+            if done or steps >= MAX_STEPS_FOR_TEST:
+                print("test for net finished")
                 break
     return rewards / count, steps / count
 
@@ -135,6 +137,8 @@ if __name__ == "__main__":
 
                 if len(buffer) < REPLAY_INITIAL:
                     continue
+                if len(buffer) == REPLAY_INITIAL:
+                    print("Initialization of the buffer is finished, start training...")
 
                 batch = buffer.sample(BATCH_SIZE)
                 states_v, actions_v, rewards_v, \
