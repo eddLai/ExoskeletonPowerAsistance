@@ -49,9 +49,6 @@ class ExoskeletonEnv(gym.Env):
         self.observation, self.filtered_emg_observation, self.bp_parameter, self.nt_parameter, self.lp_parameter = client_order.get_INFO(self.sock, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
         self.emg_observation = np.sqrt(np.mean(self.filtered_emg_observation**2, axis=1))
 
-        if self.init_time <= 10000:
-            self.init_time = self.init_time + 50  #len(new_emg_observation)
-        
         client_order.send_action_to_exoskeleton(self.sock, action, self.observation ,"speed")
         self.reward = self.calculate_reward()
         done = self.check_if_done(self.observation)
@@ -72,10 +69,19 @@ class ExoskeletonEnv(gym.Env):
         time.sleep(5)
         client_order.FREEX_CMD(self.sock, "E", "0", "E", "0")
         input("Press Enter to Reset Muscle Power Level")
+        self.bp_parameter = np.zeros((8,8))
+        self.nt_parameter = np.zeros((8,2))
+        self.lp_parameter = np.zeros((8,4))
+        self.initial_max_min_rms_values = np.zeros((8,2))
+        self.init_time = 0
         print("Please walk naturally for 10 seconds.")
-        
-        self.observation, self.emg_observation, self.bp_parameter, self.nt_parameter, self.lp_parameter = client_order.get_INFO(self.sock, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
-        self.emg_observation = np.sqrt(np.mean(self.emg_observation**2, axis=1))
+        while self.init_time <= 10000:
+            self.init_time = self.init_time + 50  #len(new_emg_observation)
+            self.observation, self.emg_observation, self.bp_parameter, self.nt_parameter, self.lp_parameter = client_order.get_INFO(self.sock, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
+            self.emg_observation = np.sqrt(np.mean(self.emg_observation**2, axis=1))
+            self.calculate_reward()
+            if self.init_time % 1000 == 0:
+                print("Countdown: ",10 - int(round(self.init_time/1000)))
         print("first data recv")
         return np.concatenate([self.observation, self.emg_observation], axis=0)  #self.emg_observation的格式
         # return np.zeros(15)
