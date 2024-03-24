@@ -6,9 +6,9 @@ import time
 import numpy as np
 
 def main():
+    writer = SummaryWriter("runs/recording_EXO_newEMG_plot")
+    env = Env.ExoskeletonEnv(writer, device='cuda')
     try:
-        writer = SummaryWriter("runs/recording_EXO_newEMG_plot")
-        env = Env.ExoskeletonEnv(writer, device='cuda')
         state = env.reset(is_recording=False)
         print("reset")
         done = False
