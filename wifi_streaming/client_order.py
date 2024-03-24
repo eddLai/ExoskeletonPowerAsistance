@@ -63,7 +63,8 @@ def get_INFO(sock, uri, bp_parameter, nt_parameter, lp_parameter):
     return analyzed_data, emg_observation, bp_parameter, nt_parameter, lp_parameter
 
 def if_not_safe(limit, angle, speed):
-    if (angle >= limit and speed > 0) or (angle <= -limit and speed < 0):
+    # if (angle >= limit and speed > 0) or (angle <= -limit and speed < 0):
+    if (angle >= limit) or (angle <= -limit):    
         return True
     else:
         return False
@@ -82,21 +83,20 @@ def send_action_to_exoskeleton_speed(writer, action, state):
     L_angle = state[3]
     R_current = state[2]
     L_current = state[5]
-    print(state)
     current_action_is_zero = action[0] == 0 and action[1] == 0
     if (current_action_is_zero and last_action_was_zero):
         return
-
+    print("action: ", action, "angle: ", state[0], state[3], "current: ", state[2], state[5])
     check_R = if_not_safe(LIMIT, action[0], R_angle) or R_current > CURRENT_LIMIT
     check_L = if_not_safe(LIMIT, action[1], L_angle) or L_current > CURRENT_LIMIT
     if (check_R and check_L) or current_action_is_zero:
-        # print("both aborted")
+        print("both aborted")
         FREEX_CMD(writer, "E", "0", "E", "0")
     elif check_R or (action[0] == 0):
-        print("motor R: ", action[0], "\tangle: ", R_angle, "\tcurrent: ", R_current, "aborted")
+        print("R action aborted")
         FREEX_CMD(writer, "E", "0", 'C', f"{action[1]}")
     elif check_L or (action[1] == 0):
-        print("motor L: ", action[1], "\tangle: ", L_angle, "\tcurrent: ", L_current, "aborted")
+        print("L action aborted")
         FREEX_CMD(writer, 'C', f"{action[0]}", "E", "0")
     else:
         # print("OK")

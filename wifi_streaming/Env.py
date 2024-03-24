@@ -56,7 +56,7 @@ class ExoskeletonEnv(gym.Env):
         self.render()
         return np.concatenate([self.observation, self.emg_observation], axis=0), self.reward, done, {}
     
-    def reset(self):
+    def reset(self, is_recording=False):
         if self.sock is not None:
             self.sock.close()
             self.sock = None
@@ -66,25 +66,32 @@ class ExoskeletonEnv(gym.Env):
         time.sleep(2)
         client_order.FREEX_CMD(self.sock, "A", "0000", "A", "0000")
         print("reset to angle, be relaxed")
-        time.sleep(5)
+        time.sleep(2)
         client_order.FREEX_CMD(self.sock, "E", "0", "E", "0")
-        input("Press Enter to Reset Muscle Power Level")
+        self.emg_observation = np.zeros(8)
+        self.filtered_emg_observation = np.zeros((8,50))
         self.bp_parameter = np.zeros((8,8))
         self.nt_parameter = np.zeros((8,2))
         self.lp_parameter = np.zeros((8,4))
         self.initial_max_min_rms_values = np.zeros((8,2))
-        self.init_time = 0
-        print("Please walk naturally for 10 seconds.")
-        while self.init_time <= 10000:
-            self.init_time = self.init_time + 50  #len(new_emg_observation)
-            self.observation, self.emg_observation, self.bp_parameter, self.nt_parameter, self.lp_parameter = client_order.get_INFO(self.sock, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
-            self.emg_observation = np.sqrt(np.mean(self.emg_observation**2, axis=1))
-            self.calculate_reward()
-            if self.init_time % 1000 == 0:
-                print("Countdown: ",10 - int(round(self.init_time/1000)))
+        if is_recording:
+            self.recoding_for_power_level()
+        else:
+            self.observation, self.filtered_emg_observation, self.bp_parameter, self.nt_parameter, self.lp_parameter = client_order.get_INFO(self.sock, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
         print("first data recv")
         return np.concatenate([self.observation, self.emg_observation], axis=0)  #self.emg_observation的格式
         # return np.zeros(15)
+    
+    def recoding_for_power_level(self):
+        input("Press Enter to Reset Muscle Power Level, Please walk naturally for about 10 seconds...")
+        self.init_time = 0
+        while self.init_time <= 10000:
+            self.init_time = self.init_time + 50  #len(new_emg_observation)
+            self.observation, self.filtered_emg_observation, self.bp_parameter, self.nt_parameter, self.lp_parameter = client_order.get_INFO(self.sock, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
+            self.emg_observation = np.sqrt(np.mean(self.filtered_emg_observation**2, axis=1))
+            self.calculate_reward()
+            if self.init_time % 1000 == 0:
+                print("Countdown: ",10 - int(round(self.init_time/1000)))
 
     def calculate_reward(self):
         reward, self.initial_max_min_rms_values = emg_nonasync.calculate_emg_level(self.emg_observation, self.initial_max_min_rms_values, self.init_time)
@@ -105,3 +112,12 @@ class ExoskeletonEnv(gym.Env):
             for j in range(50):
                 self.log_writer.add_scalar(f'Filtered_EMG/{channel_names[i]}', self.filtered_emg_observation[i][j], filtered_emg_step+j)
             self.log_writer.add_scalar(f'sqrted EMG/Channel_{channel_names[i]}', self.emg_observation[i], self.current_step)
+
+    def close(self):
+        print("closing")
+        client_order.FREEX_CMD(self.sock, "A", "0", "A", "0")
+        time.sleep(2)
+        client_order.FREEX_CMD(self.sock, "E", "0", "E", "0")
+        time.sleep(0.05)
+        self.sock.close()
+        self.log_writer.close()
