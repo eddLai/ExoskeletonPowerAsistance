@@ -47,6 +47,7 @@ class ExoskeletonEnv(gym.Env):
     def step(self, action):
         # 改回用send_action_to_exoskeleton_speed函數
         self.observation, self.filtered_emg_observation, self.bp_parameter, self.nt_parameter, self.lp_parameter = client_order.get_INFO(self.sock, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
+        #window.update_plot(self.filtered_emg_observation[0])
         self.emg_observation = np.sqrt(np.mean(self.filtered_emg_observation**2, axis=1))
 
         client_order.send_action_to_exoskeleton(self.sock, action, self.observation ,"speed")
@@ -69,6 +70,8 @@ class ExoskeletonEnv(gym.Env):
         time.sleep(5)
         client_order.FREEX_CMD(self.sock, "E", "0", "E", "0")
         input("Press Enter to Reset Muscle Power Level")
+        self.emg_observation = np.zeros(8)
+        self.filtered_emg_observation = np.zeros((8,50))
         self.bp_parameter = np.zeros((8,8))
         self.nt_parameter = np.zeros((8,2))
         self.lp_parameter = np.zeros((8,4))
@@ -77,8 +80,9 @@ class ExoskeletonEnv(gym.Env):
         print("Please walk naturally for 10 seconds.")
         while self.init_time <= 10000:
             self.init_time = self.init_time + 50  #len(new_emg_observation)
-            self.observation, self.emg_observation, self.bp_parameter, self.nt_parameter, self.lp_parameter = client_order.get_INFO(self.sock, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
-            self.emg_observation = np.sqrt(np.mean(self.emg_observation**2, axis=1))
+            self.observation, self.filtered_emg_observation, self.bp_parameter, self.nt_parameter, self.lp_parameter = client_order.get_INFO(self.sock, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
+            #window.update_plot(self.filtered_emg_observation[0])
+            self.emg_observation = np.sqrt(np.mean(self.filtered_emg_observation**2, axis=1))
             self.calculate_reward()
             if self.init_time % 1000 == 0:
                 print("Countdown: ",10 - int(round(self.init_time/1000)))
