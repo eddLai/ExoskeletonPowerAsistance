@@ -79,6 +79,7 @@ class ExoskeletonEnv(gym.Env):
             self.recoding_for_power_level()
         else:
             self.observation, self.filtered_emg_observation, self.bp_parameter, self.nt_parameter, self.lp_parameter = client_order.get_INFO(self.sock, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
+            self.emg_observation = np.sqrt(np.mean(self.filtered_emg_observation**2, axis=1))
         print("first data recv")
         return np.concatenate([self.observation, self.emg_observation], axis=0)  #self.emg_observation的格式
         # return np.zeros(15)
