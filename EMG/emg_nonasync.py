@@ -19,7 +19,7 @@ def read_specific_data_from_websocket(uri, bp_parameter, nt_parameter, lp_parame
         #     ws.close()
 
 def process_data_from_websocket(data, bp_parameter, nt_parameter, lp_parameter):
-    emg_values = np.zeros((6,50))
+    emg_values = np.zeros((8,50))
     j = 0
     try:
         data_dict = json.loads(data)
@@ -29,12 +29,12 @@ def process_data_from_websocket(data, bp_parameter, nt_parameter, lp_parameter):
             # 輸出結果
             for serial_number, eeg in serial_numbers_eegs:
                 # print(f"Serial Number: {serial_number}, EEG: {eeg}")
-                for i in range(6):
+                for i in range(8):
                     emg_values[i,j] = eeg[i]      # 最新的50筆emg資料
                 j+=1
             try:
-                emg_array = np.empty((6, 50))
-                for k in range(6):
+                emg_array = np.empty((8, 50))
+                for k in range(8):
                     #print("check2",emg_values[k],bp_parameter[k], nt_parameter[k], lp_parameter[k])
                     emg_array[k], bp_parameter[k], nt_parameter[k], lp_parameter[k] = process_emg_signal(emg_values[k],bp_parameter[k], nt_parameter[k], lp_parameter[k])
                     #print("check5",emg_values[k],bp_parameter[k], nt_parameter[k], lp_parameter[k])
@@ -82,7 +82,7 @@ def lowpass_filter(data, cutoff, fs, lp_filter_state, order=4):
     b, a = butter(order, normal_cutoff, btype='low', analog=False)
     if lp_filter_state.all() == 0:
         lp_filter_state = lfilter_zi(b, a)
-        #print("check6", lp_filter_state)
+        #print("check8", lp_filter_state)
     y, lp_filter_state = lfilter(b, a, data, zi=lp_filter_state)
     return y, lp_filter_state
 
@@ -105,7 +105,7 @@ def calculate_emg_level(data, initial_max_min_rms_values, times):
         return 0, initial_max_min_rms_values
     # 使用第1秒到第10秒的数据来确定初始的最小、最大RMS值
     elif 1000 < times <= 10000:
-        for i in range(6):
+        for i in range(8):
             rms_values = data[i]
             if initial_max_min_rms_values[i][0] == 0 or rms_values > initial_max_min_rms_values[i][0]:
                 initial_max_min_rms_values[i][0] = rms_values
@@ -114,9 +114,9 @@ def calculate_emg_level(data, initial_max_min_rms_values, times):
         return 0, initial_max_min_rms_values
     #每0.05秒傳出reward值
     else:
-        reward = np.zeros(6)
+        reward = np.zeros(8)
         y = 0
-        for i in range(6):
+        for i in range(8):
             rms_values = data[i]
             reward[i] = map_to_levels(rms_values, initial_max_min_rms_values[i])
             y = y + reward[i]
@@ -148,10 +148,10 @@ def map_to_levels(value, max_min_rms_values):
 # def main():
 #     websocket_uri = "ws://localhost:31278/ws"
 
-#     bp_parameter = np.zeros((6,8))
-#     nt_parameter = np.zeros((6,2))
-#     lp_parameter = np.zeros((6,4))
-#     initial_max_min_rms_values = np.zeros((6,2))
+#     bp_parameter = np.zeros((8,8))
+#     nt_parameter = np.zeros((8,2))
+#     lp_parameter = np.zeros((8,4))
+#     initial_max_min_rms_values = np.zeros((8,2))
 #     init_time = 0
 
 #     read_specific_data_from_websocket(websocket_uri,bp_parameter, nt_parameter, lp_parameter)

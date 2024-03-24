@@ -6,6 +6,7 @@ from gym import spaces
 import numpy as np
 from tensorboardX import SummaryWriter
 import time
+import keyboard
 
 class ExoskeletonEnv(gym.Env):
     metadata = {'render.modes': ['human']}
@@ -58,6 +59,9 @@ class ExoskeletonEnv(gym.Env):
         print("reset to angle, be relaxed")
         time.sleep(5)
         client_order.FREEX_CMD(self.sock, "E", "0", "E", "0")
+        input("Press Enter to Reset Muscle Power Level")
+        print("Please walk naturally for 10 seconds.")
+        
         self.observation, self.emg_observation, self.bp_parameter, self.nt_parameter, self.lp_parameter = client_order.get_INFO(self.sock, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
         self.emg_observation = np.sqrt(np.mean(self.emg_observation**2, axis=1))
         print("first data recv")

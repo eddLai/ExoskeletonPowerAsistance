@@ -155,12 +155,12 @@ def map_to_levels(value, max_min_rms_values):
     
     if value <= max_min_rms_values[1]:
         # 计算低于min_rms_values的值应映射到哪个级别
-        level_diff = (value - max_min_rms_values[1]) / level_range
+        level_diff = (max_min_rms_values[1] - value) / level_range
         return int(round(5 + level_diff))
     elif value >= max_min_rms_values[0]:
         # 计算高于max_rms_values的值应映射到哪个级别
         level_diff = (value - max_min_rms_values[0]) / level_range
-        return int(round(-5 + level_diff))
+        return int(round(-5 - level_diff))
     else:
         # 线性映射到5到-5
         normalized_value = (value - max_min_rms_values[1]) / (max_min_rms_values[0] - max_min_rms_values[1])
