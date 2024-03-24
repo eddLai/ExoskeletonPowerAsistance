@@ -6,7 +6,8 @@ from RL import models
 import argparse
 from tensorboardX import SummaryWriter
 import numpy as np
-import keyboard
+import threading
+from pynput import keyboard
 from wifi_streaming import client_order
 
 import torch
@@ -18,14 +19,14 @@ BATCH_SIZE = 64
 LEARNING_RATE = 1e-3
 MOMENTUM = 0.9
 REPLAY_SIZE = 100000
-REPLAY_INITIAL = 1
+REPLAY_INITIAL = 10
 REWARD_STEPS = 5 # 3~10
 
 OBSERVATION_DIMS = 9+8
 ACTION_DIMS = 2
 
-TEST_ITERS = 10 # determines when training stop for a while
-MAX_STEPS_FOR_TEST = 1
+TEST_ITERS = 100 # determines when training stop for a while
+MAX_STEPS_FOR_TEST = 30
 
 Vmax = 10
 Vmin = -10
@@ -36,7 +37,7 @@ DELTA_Z = (Vmax - Vmin) / (N_ATOMS - 1)
 def test_net(net, env, count=10, device="cpu"):
     rewards = 0.0
     steps = 0
-    obs = env.reset(is_recording=True)
+    obs = env.reset(is_recording=False)
     while True:
             obs_v = ptan.agent.float32_preprocessor([obs]).to(device)
             mu_v = net(obs_v)
@@ -47,7 +48,9 @@ def test_net(net, env, count=10, device="cpu"):
             steps += 1
             if done or steps >= MAX_STEPS_FOR_TEST:
                 print("net test1 finished")
+                client_order.FREEX_CMD(env.sock, "E", "0", "E", "0")
                 break
+    time.sleep(1)
     for i in range(count-1):
         obs = env.reset(is_recording=False)
         while True:
@@ -59,8 +62,10 @@ def test_net(net, env, count=10, device="cpu"):
             rewards += reward
             steps += 1
             if done or steps >= MAX_STEPS_FOR_TEST:
+                client_order.FREEX_CMD(env.sock, "E", "0", "E", "0")
                 print(f"net test{i+1} finished")
                 break
+        time.sleep(1)
     return rewards / count, steps / count
 
 
@@ -108,6 +113,16 @@ def distr_projection(next_distr_v, rewards_v, dones_mask_t,
             proj_distr[ne_dones, u[ne_mask]] = (b_j - l)[ne_mask]
     return torch.FloatTensor(proj_distr).to(device)
 
+stop_event = threading.Event()
+def on_press(key):
+    try:
+        if key.char == 'q':
+            stop_event.set()
+    except AttributeError:
+        pass
+def start_listening():
+    listener = keyboard.Listener(on_press=on_press)
+    listener.start()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -115,7 +130,7 @@ if __name__ == "__main__":
     parser.add_argument("-n", "--name", required=True, help="Name of the run")
     args = parser.parse_args()
     device = torch.device("cuda" if args.cuda else "cpu")
-
+    start_listening()
     save_path = os.path.join("saves", "d4pg-" + args.name)
     os.makedirs(save_path, exist_ok=True)
 
@@ -140,7 +155,8 @@ if __name__ == "__main__":
     with ptan.common.utils.RewardTracker(writer) as tracker:
         with ptan.common.utils.TBMeanTracker(writer, batch_size=10) as tb_tracker:
             while True:
-                if keyboard.is_pressed('q'):
+                if stop_event.is_set():
+                    client_order.FREEX_CMD(env.sock, "E", "0", "E", "0")
                     print("Training stopped by user.")
                     training_stopped_early = True
                     break
@@ -156,6 +172,7 @@ if __name__ == "__main__":
                     continue
                 if len(buffer) == REPLAY_INITIAL:
                     print("Initialization of the buffer is finished, start training...")
+                    client_order.FREEX_CMD(env.sock, "E", "0", "E", "0")
                     input("Press Enter to continue...")
 
                 batch = buffer.sample(BATCH_SIZE)
@@ -198,9 +215,9 @@ if __name__ == "__main__":
                 if frame_idx % TEST_ITERS == 0:
                     client_order.FREEX_CMD(env.sock, "E", "0", "E", "0")
                     print("Please prepare for a test phase by changing the exoskeleton user, if desired.")
-                    input("Press Enter to continue after the user has been changed and is ready...")
+                    # input("Press Enter to continue after the user has been changed and is ready...")
                     ts = time.time()
-                    rewards, steps = test_net(act_net, env, count=10, device=device)
+                    rewards, steps = test_net(act_net, env, count=3, device=device)
                     print("Test done in %.2f sec, reward %.3f, steps %d" % (
                         time.time() - ts, rewards, steps))
                     writer.add_scalar("test_reward", rewards, frame_idx)

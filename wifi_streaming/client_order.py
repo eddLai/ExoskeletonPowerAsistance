@@ -77,7 +77,7 @@ def send_action_to_exoskeleton_speed(writer, action, state):
     global last_action_was_zero
     action[0] *= 10000  # Scale the action for the right side
     action[1] *= 10000  # Scale the action for the left side
-    LIMIT = 35
+    LIMIT = 20
     CURRENT_LIMIT = 50000
     R_angle, L_angle = state[0], state[3]
     R_current, L_current = state[2], state[5]
@@ -86,19 +86,19 @@ def send_action_to_exoskeleton_speed(writer, action, state):
     if current_action_is_zero and last_action_was_zero:
         return
 
-    print(f"action: {action}, angle: {R_angle}, {L_angle}, current: {R_current}, {L_current}")
+    # print(f"action: {action}, angle: {R_angle}, {L_angle}, current: {R_current}, {L_current}")
 
     check_R = if_not_safe(LIMIT, R_angle, action[0])
     check_L = if_not_safe(LIMIT, L_angle, action[1])
 
     if check_R and check_L:
-        print("both actions aborted due to safety")
+        # print("both actions aborted due to safety")
         FREEX_CMD(writer, "E", "0", "E", "0")
     elif check_R:
-        print("Right action aborted due to safety")
+        # print("Right action aborted due to safety")
         FREEX_CMD(writer, "E", "0", 'C', f"{action[1]}" if not check_L else "0")
     elif check_L:
-        print("Left action aborted due to safety")
+        # print("Left action aborted due to safety")
         FREEX_CMD(writer, 'C', f"{action[0]}" if not check_R else "0", "E", "0")
     else:
         FREEX_CMD(writer, 'C', f"{action[0]}", 'C', f"{action[1]}")

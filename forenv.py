@@ -9,7 +9,7 @@ def main():
     try:
         writer = SummaryWriter("runs/recording_EXO_newEMG_plot")
         env = Env.ExoskeletonEnv(writer, device='cuda')
-        state = env.reset(is_recording=False)
+        state = env.reset(is_recording=True)
         print("reset")
         done = False
         while not done:

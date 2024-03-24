@@ -120,6 +120,7 @@ def calculate_emg_level(data, initial_max_min_rms_values, times):
             rms_values = data[i]
             reward[i] = map_to_levels(rms_values, initial_max_min_rms_values[i])
             y = y + reward[i]
+        print("Total: ",y,"Reward: ",reward)
         return y, initial_max_min_rms_values
 
 def calculate_rms(signal):
@@ -130,21 +131,24 @@ def map_to_levels(value, max_min_rms_values):
     """將值映射到超出5到-5級的線性值上，基於放鬆閾值和初始最大RMS值，
     但在上下限內分為5到-5十個等級區間。"""
     # 计算每个等级的值范围大小
-    level_range = (max_min_rms_values[0] - max_min_rms_values[1]) / 10
-    
-    if value <= max_min_rms_values[1]:
-        # 计算低于min_rms_values的值应映射到哪个级别
-        level_diff = (max_min_rms_values[1] - value) / level_range
-        return int(round(5 + level_diff))
-    elif value >= max_min_rms_values[0]:
-        # 计算高于max_rms_values的值应映射到哪个级别
-        level_diff = (value - max_min_rms_values[0]) / level_range
-        return int(round(-5 - level_diff))
-    else:
-        # 线性映射到5到-5
-        normalized_value = (value - max_min_rms_values[1]) / (max_min_rms_values[0] - max_min_rms_values[1])
-        return int(round(normalized_value * (-10))) + 5
-
+    try:
+        level_range = (max_min_rms_values[0] - max_min_rms_values[1]) / 10
+        
+        if value <= max_min_rms_values[1]:
+            # 计算低于min_rms_values的值应映射到哪个级别
+            level_diff = (max_min_rms_values[1] - value) / level_range
+            return 5 + round(level_diff)
+        elif value >= max_min_rms_values[0]:
+            # 计算高于max_rms_values的值应映射到哪个级别
+            level_diff = (value - max_min_rms_values[0]) / level_range
+            return -5 - round(level_diff)
+        else:
+            # 线性映射到5到-5
+            normalized_value = (value - max_min_rms_values[1]) / (max_min_rms_values[0] - max_min_rms_values[1])
+            return int(round(normalized_value * (-10))) + 5
+    except Exception as e:
+        print(f"計算reward發生錯誤: {e}, return 0")
+        return 0
 # def main():
 #     websocket_uri = "ws://localhost:31278/ws"
 
