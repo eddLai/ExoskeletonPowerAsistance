@@ -75,35 +75,39 @@ right_disabled = False
 
 def send_action_to_exoskeleton_speed(writer, action, state):
     global last_action_was_zero
-    action[0] *= 10000
-    action[1] *= 10000
+    action[0] *= 10000  # Scale the action for the right side
+    action[1] *= 10000  # Scale the action for the left side
     LIMIT = 35
     CURRENT_LIMIT = 50000
-    R_angle = state[0]
-    L_angle = state[3]
-    R_current = state[2]
-    L_current = state[5]
-    current_action_is_zero = action[0] == 0 and action[1] == 0
-    if (current_action_is_zero and last_action_was_zero):
+    R_angle, L_angle = state[0], state[3]
+    R_current, L_current = state[2], state[5]
+    current_action_is_zero = all(a == 0 for a in action)
+
+    if current_action_is_zero and last_action_was_zero:
         return
-    print("action: ", action, "angle: ", state[0], state[3], "current: ", state[2], state[5])
-    check_R = if_not_safe(LIMIT, action[0], R_angle) or R_current > CURRENT_LIMIT
-    check_L = if_not_safe(LIMIT, action[1], L_angle) or L_current > CURRENT_LIMIT
-    if (check_R and check_L) or current_action_is_zero:
-        print("both aborted")
+
+    print(f"action: {action}, angle: {R_angle}, {L_angle}, current: {R_current}, {L_current}")
+
+    check_R = if_not_safe(LIMIT, R_angle, action[0])
+    check_L = if_not_safe(LIMIT, L_angle, action[1])
+
+    if check_R and check_L:
+        print("both actions aborted due to safety")
         FREEX_CMD(writer, "E", "0", "E", "0")
-    elif check_R or (action[0] == 0):
-        print("R action aborted")
-        FREEX_CMD(writer, "E", "0", 'C', f"{action[1]}")
-    elif check_L or (action[1] == 0):
-        print("L action aborted")
-        FREEX_CMD(writer, 'C', f"{action[0]}", "E", "0")
+    elif check_R:
+        print("Right action aborted due to safety")
+        FREEX_CMD(writer, "E", "0", 'C', f"{action[1]}" if not check_L else "0")
+    elif check_L:
+        print("Left action aborted due to safety")
+        FREEX_CMD(writer, 'C', f"{action[0]}" if not check_R else "0", "E", "0")
     else:
-        # print("OK")
         FREEX_CMD(writer, 'C', f"{action[0]}", 'C', f"{action[1]}")
 
     last_action_was_zero = current_action_is_zero
     print("-----------------------------")
+
+
+
 
 def send_action_to_exoskeleton(writer, action, state, control_type='speed'):
     if control_type == 'speed':
