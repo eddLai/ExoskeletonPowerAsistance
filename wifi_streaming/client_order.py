@@ -36,25 +36,29 @@ def connect_FREEX(host='192.168.4.1', port=8080):
     return sock
 
 def read_line(sock):
-    data = sock.recv(1024)
-    if not data:
-        return None
     try:
+        data = sock.recv(1024)
+        if not data:
+            return None
         data = data.decode('ascii').rstrip('\r\n\0')
         return data
-    except UnicodeDecodeError as e:
-        print(f"Error decoding data: {e}")
+    except Exception as e:
+        FREEX_CMD(sock, "E", "0", "E", "0")
+        print(f"Error when reading_line: {e}")
         return None
 
 def get_INFO(sock, uri, bp_parameter, nt_parameter, lp_parameter):
     while True:
         info = read_line(sock)
         if info is None or info == "":
+            FREEX_CMD(sock, "E", "0", "E", "0")
             continue
         # print("raw_data: ", info)  
         analyzed_data, is_analyzed = analysis(info)
         if is_analyzed:
             break
+        else:
+            FREEX_CMD(sock, "E", "0", "E", "0")
     # print("analyzed: ", analyzed_data)
     # analyzed_data = np.random.rand(9)
     # emg
@@ -77,7 +81,7 @@ def send_action_to_exoskeleton_speed(writer, action, state):
     global last_action_was_zero
     action[0] *= 10000  # Scale the action for the right side
     action[1] *= 10000  # Scale the action for the left side
-    LIMIT = 20
+    LIMIT = 10
     CURRENT_LIMIT = 50000
     R_angle, L_angle = state[0], state[3]
     R_current, L_current = state[2], state[5]

@@ -25,8 +25,8 @@ REWARD_STEPS = 5 # 3~10
 OBSERVATION_DIMS = 9+8
 ACTION_DIMS = 2
 
-TEST_ITERS = 100 # determines when training stop for a while
-MAX_STEPS_FOR_TEST = 30
+TEST_ITERS = 60 # determines when training stop for a while
+MAX_STEPS_FOR_TEST = 10
 
 Vmax = 10
 Vmin = -10
@@ -229,7 +229,7 @@ if __name__ == "__main__":
                             fname = os.path.join(save_path, name)
                             torch.save(act_net.state_dict(), fname)
                         best_reward = rewards
-                time.sleep(0.001)
+                time.sleep(0.01)
     # except KeyboardInterrupt:
         # print("Training interrupted by keyboard.")
     
