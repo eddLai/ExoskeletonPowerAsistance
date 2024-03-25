@@ -99,7 +99,7 @@ def process_emg_signal(data, bp_parameter, nt_parameter, lp_parameter, fs=1000):
 
     return enveloped, bp_parameter, nt_parameter, lp_parameter
 # 以下為肌力回饋
-def calculate_emg_level(data, initial_max_min_rms_values, times):
+def calculate_emg_level(data, initial_max_min_rms_values, times, ta=20,rf=35,bf=30,Ga=15):
     #前1秒為暖機
     if times <= 1000:
         return 0, initial_max_min_rms_values
@@ -119,9 +119,9 @@ def calculate_emg_level(data, initial_max_min_rms_values, times):
         for i in range(8):
             rms_values = data[i]
             reward[i] = map_to_levels(rms_values, initial_max_min_rms_values[i])
-            y = y + reward[i]
-        print("Total: ",y,"Reward: ",reward)
-        return y, initial_max_min_rms_values
+        y = ta*reward[0]+rf*reward[1]+bf*reward[2]+Ga*reward[3]+ta*reward[4]+rf*reward[5]+bf*reward[6]+Ga*reward[7]
+        print("Total: ",y/200,"Reward: ",reward)
+        return y/200, initial_max_min_rms_values
 
 def calculate_rms(signal):
     "計算訊號的RMS值。"
