@@ -136,6 +136,26 @@ if __name__ == "__main__":
 
     act_net = models.DDPGActor(OBSERVATION_DIMS, ACTION_DIMS).to(device)
     crt_net = models.D4PGCritic(OBSERVATION_DIMS, ACTION_DIMS, N_ATOMS, Vmin, Vmax).to(device)
+
+    best_model_path = None
+    best_reward = float('-inf')
+    for file in os.listdir(save_path):
+        if file.startswith("best_") and file.endswith(".dat"):
+            # 从文件名解析奖励值
+            try:
+                reward_str = file.split('_')[1]
+                reward = float(reward_str)
+                if reward > best_reward:
+                    best_reward = reward
+                    best_model_path = os.path.join(save_path, file)
+            except ValueError:
+                pass
+    if best_model_path:
+        act_net.load_state_dict(torch.load(best_model_path, map_location=device))
+        print(f"Loaded best model: {best_model_path}")
+    else:
+        print("No best model found, starting from scratch.")
+
     print(act_net)
     print(crt_net)
     tgt_act_net = ptan.agent.TargetNet(act_net)
