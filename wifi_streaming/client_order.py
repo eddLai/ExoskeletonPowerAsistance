@@ -52,6 +52,7 @@ def get_INFO(sock, uri, bp_parameter, nt_parameter, lp_parameter):
         info = read_line(sock)
         if info is None or info == "":
             FREEX_CMD(sock, "E", "0", "E", "0")
+            print("stucking in EXO data failed")
             continue
         # print("raw_data: ", info)  
         analyzed_data, is_analyzed = analysis(info)

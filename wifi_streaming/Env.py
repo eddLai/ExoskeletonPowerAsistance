@@ -58,6 +58,8 @@ class ExoskeletonEnv(gym.Env):
         return np.concatenate([self.observation, self.emg_observation], axis=0), self.reward, done, {}
     
     def reset(self, is_recording=True):
+        client_order.FREEX_CMD(self.sock, "E", "0", "E", "0")
+        time.sleep(1)
         if self.sock is not None:
             self.sock.close()
             self.sock = None
@@ -88,7 +90,7 @@ class ExoskeletonEnv(gym.Env):
         input("Press Enter to Reset Muscle Power Level, Please walk naturally for about 10 seconds...")
         self.initial_max_min_rms_values = np.zeros((8,2))
         self.init_time = 0
-        while self.init_time <= 10000:
+        while self.init_time <= 5000:
             self.init_time = self.init_time + 50  #len(new_emg_observation)
             self.observation, self.filtered_emg_observation, self.bp_parameter, self.nt_parameter, self.lp_parameter = client_order.get_INFO(self.sock, self.uri ,self.bp_parameter, self.nt_parameter, self.lp_parameter)
             self.emg_observation = np.sqrt(np.mean(self.filtered_emg_observation**2, axis=1))

@@ -38,21 +38,23 @@ def test_net(net, env, count=10, device="cpu"):
     rewards = 0.0
     steps = 0
     obs = env.reset(is_recording=False)
-    while True:
-            obs_v = ptan.agent.float32_preprocessor([obs]).to(device)
-            mu_v = net(obs_v)
-            action = mu_v.squeeze(dim=0).data.cpu().numpy()
-            action = np.clip(action, -1, 1)
-            obs, reward, done, _ = env.step(action)
-            rewards += reward
-            steps += 1
-            if done or steps >= MAX_STEPS_FOR_TEST:
-                print("net test1 finished")
-                client_order.FREEX_CMD(env.sock, "E", "0", "E", "0")
-                break
-    time.sleep(1)
+    # while True:
+    #         obs_v = ptan.agent.float32_preprocessor([obs]).to(device)
+    #         mu_v = net(obs_v)
+    #         action = mu_v.squeeze(dim=0).data.cpu().numpy()
+    #         action = np.clip(action, -1, 1)
+    #         obs, reward, done, _ = env.step(action)
+    #         rewards += reward
+    #         steps += 1
+    #         if done or steps >= MAX_STEPS_FOR_TEST:
+    #             print("net test1 finished")
+    #             client_order.FREEX_CMD(env.sock, "E", "0", "E", "0")
+    #             break
+    # time.sleep(1)
     for i in range(count-1):
-        obs = env.reset(is_recording=False)
+        steps = 0
+        rewards = 0.0
+        # obs = env.reset(is_recording=False)
         while True:
             obs_v = ptan.agent.float32_preprocessor([obs]).to(device)
             mu_v = net(obs_v)
@@ -63,7 +65,7 @@ def test_net(net, env, count=10, device="cpu"):
             steps += 1
             if done or steps >= MAX_STEPS_FOR_TEST:
                 client_order.FREEX_CMD(env.sock, "E", "0", "E", "0")
-                print(f"net test{i+1} finished")
+                print(f"net test{i+2} finished")
                 break
         time.sleep(1)
     return rewards / count, steps / count
@@ -237,7 +239,7 @@ if __name__ == "__main__":
                     print("Please prepare for a test phase by changing the exoskeleton user, if desired.")
                     # input("Press Enter to continue after the user has been changed and is ready...")
                     ts = time.time()
-                    rewards, steps = test_net(act_net, env, count=3, device=device)
+                    rewards, steps = test_net(act_net, env, count=4, device=device)
                     print("Test done in %.2f sec, reward %.3f, steps %d" % (
                         time.time() - ts, rewards, steps))
                     writer.add_scalar("test_reward", rewards, frame_idx)

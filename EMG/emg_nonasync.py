@@ -99,12 +99,12 @@ def process_emg_signal(data, bp_parameter, nt_parameter, lp_parameter, fs=1000):
 
     return enveloped, bp_parameter, nt_parameter, lp_parameter
 # 以下為肌力回饋
-def calculate_emg_level(data, initial_max_min_rms_values, times, ta=20,rf=35,bf=30,Ga=15):
+def calculate_emg_level(data, initial_max_min_rms_values, times, ta=20,rf=40,bf=25,Ga=15):
     #前1秒為暖機
     if times <= 1000:
         return 0, initial_max_min_rms_values
     # 使用第1秒到第10秒的数据来确定初始的最小、最大RMS值
-    elif 1000 < times <= 10000:
+    elif 1000 < times <= 5000:
         for i in range(8):
             rms_values = data[i]
             if initial_max_min_rms_values[i][0] == 0 or rms_values > initial_max_min_rms_values[i][0]:
