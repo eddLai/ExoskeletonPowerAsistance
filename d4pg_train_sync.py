@@ -25,7 +25,7 @@ REWARD_STEPS = 5 # 3~10
 OBSERVATION_DIMS = 9+8
 ACTION_DIMS = 2
 
-TEST_ITERS = 60 # determines when training stop for a while
+TEST_ITERS = 160 # determines when training stop for a while
 MAX_STEPS_FOR_TEST = 10
 
 Vmax = 10
@@ -178,10 +178,17 @@ if __name__ == "__main__":
         with ptan.common.utils.TBMeanTracker(writer, batch_size=10) as tb_tracker:
             while True:
                 if stop_event.is_set():
-                    client_order.FREEX_CMD(env.sock, "E", "0", "E", "0")
                     print("Training stopped by user.")
                     training_stopped_early = True
+                    if best_reward is not None:
+                        current_model_name = "best_%+.3f_%d.dat" % (best_reward, frame_idx)
+                    else:
+                        print("you stopped training before any best reward was achieved.")
+                    current_model_path = os.path.join(save_path, current_model_name)
+                    torch.save(act_net.state_dict(), current_model_path)
+                    print(f"Current model saved to {current_model_path}")
                     break
+
                 frame_idx += 1
                 buffer.populate(1)
                 rewards_steps = exp_source.pop_rewards_steps()

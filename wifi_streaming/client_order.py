@@ -27,7 +27,11 @@ def analysis(data):
 def FREEX_CMD(sock, mode1="E", value1="0", mode2="E", value2="0"):
     cmd_str = f"X {mode1} {value1} {mode2} {value2}\r\n\0"
     cmd_bytes = cmd_str.encode('ascii')
-    sock.send(cmd_bytes)
+    try:
+        sock.send(cmd_bytes)
+    except Exception as e:
+        FREEX_CMD(sock, "E", "0", "E", "0")
+        print(f"Error when sending: {e}")
 
 def connect_FREEX(host='192.168.4.1', port=8080):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
