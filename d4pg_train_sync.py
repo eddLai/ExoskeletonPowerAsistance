@@ -33,6 +33,34 @@ Vmin = -10
 N_ATOMS = 51
 DELTA_Z = (Vmax - Vmin) / (N_ATOMS - 1)
 
+def find_best_model(base_path, subdir):
+    """
+    Searches for the best model within a specified directory.
+
+    Parameters:
+        base_path (str): The base path where models are stored.
+        subdir (str): The subdirectory to search for the best model.
+
+    Returns:
+        tuple: Contains the path of the best model and its corresponding reward. 
+               Returns (None, float('-inf')) if no model is found.
+    """
+    best_reward = float('-inf')  # Initialize the best reward to negative infinity
+    best_model_path = None  # Initialize the best model path to None
+    search_path = os.path.join(base_path, subdir)  # Full path to search in
+    
+    for file in os.listdir(search_path):  # Iterate through each file in the directory
+        if file.startswith("best_") and file.endswith(".dat"):  # Check if file name matches the pattern
+            try:
+                reward_str = file.split('_')[1]  # Extract the reward value from the file name
+                reward = float(reward_str)  # Convert the reward string to float
+                if reward > best_reward:  # Update best reward and model path if a better reward is found
+                    best_reward = reward
+                    best_model_path = os.path.join(search_path, file)
+            except ValueError:
+                pass  # Ignore files where the reward value cannot be converted to float
+
+    return best_model_path, best_reward  # Return the best model path and its reward
 
 def test_net(net, env, count=10, device="cpu"):
     rewards = 0.0
@@ -134,29 +162,26 @@ if __name__ == "__main__":
     device = torch.device("cuda" if args.cuda else "cpu")
     start_listening()
     save_path = os.path.join("saves", "d4pg-" + args.name)
-    os.makedirs(save_path, exist_ok=True)
+    actor_subdir = "actor"
+    critic_subdir = "critic"
+    os.makedirs(os.path.join(save_path, actor_subdir), exist_ok=True)
+    os.makedirs(os.path.join(save_path, critic_subdir), exist_ok=True)
 
     act_net = models.DDPGActor(OBSERVATION_DIMS, ACTION_DIMS).to(device)
     crt_net = models.D4PGCritic(OBSERVATION_DIMS, ACTION_DIMS, N_ATOMS, Vmin, Vmax).to(device)
 
-    best_model_path = None
-    best_reward = float('-inf')
-    for file in os.listdir(save_path):
-        if file.startswith("best_") and file.endswith(".dat"):
-            # 从文件名解析奖励值
-            try:
-                reward_str = file.split('_')[1]
-                reward = float(reward_str)
-                if reward > best_reward:
-                    best_reward = reward
-                    best_model_path = os.path.join(save_path, file)
-            except ValueError:
-                pass
-    if best_model_path:
-        act_net.load_state_dict(torch.load(best_model_path, map_location=device))
-        print(f"Loaded best model: {best_model_path}")
+    best_actor_model_path, best_actor_reward = find_best_model(save_path, actor_subdir)
+    best_critic_model_path, best_critic_reward = find_best_model(save_path, critic_subdir)
+
+    if best_actor_model_path:
+        print(f"best actor：{best_actor_model_path}, reward：{best_actor_reward}")
     else:
-        print("No best model found, starting from scratch.")
+        print("No actor NN")
+
+    if best_critic_model_path:
+        print(f"best critic：{best_critic_model_path},reward：{best_critic_reward}")
+    else:
+        print("No critic NN")
 
     print(act_net)
     print(crt_net)
@@ -255,8 +280,10 @@ if __name__ == "__main__":
                         if best_reward is not None:
                             print("Best reward updated: %.3f -> %.3f" % (best_reward, rewards))
                             name = "best_%+.3f_%d.dat" % (rewards, frame_idx)
-                            fname = os.path.join(save_path, name)
-                            torch.save(act_net.state_dict(), fname)
+                            actor_model_path = os.path.join(save_path, "actor", name)
+                            critic_model_path = os.path.join(save_path, "critic", name)
+                            torch.save(act_net.state_dict(), actor_model_path)
+                            torch.save(crt_net.state_dict(), critic_model_path)
                         best_reward = rewards
                 time.sleep(0.01)
     # except KeyboardInterrupt:
