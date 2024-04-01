@@ -209,9 +209,10 @@ if __name__ == "__main__":
                         current_model_name = "best_%+.3f_%d.dat" % (best_reward, frame_idx)
                     else:
                         print("you stopped training before any best reward was achieved.")
-                    current_model_path = os.path.join(save_path, current_model_name)
-                    torch.save(act_net.state_dict(), current_model_path)
-                    print(f"Current model saved to {current_model_path}")
+                    actor_model_path = os.path.join(save_path, "actor", name)
+                    critic_model_path = os.path.join(save_path, "critic", name)
+                    torch.save(act_net.state_dict(), actor_model_path)
+                    torch.save(crt_net.state_dict(), critic_model_path)
                     break
 
                 frame_idx += 1
