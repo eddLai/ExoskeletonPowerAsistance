@@ -1,14 +1,14 @@
 import os
 import ptan
 import time
-from wifi_streaming import Env
+from data_streaming import Env
 from RL import models
 import argparse
 from tensorboardX import SummaryWriter
 import numpy as np
 import threading
 from pynput import keyboard
-from wifi_streaming import client_order
+from data_streaming import client_order
 
 import torch
 import torch.optim as optim
