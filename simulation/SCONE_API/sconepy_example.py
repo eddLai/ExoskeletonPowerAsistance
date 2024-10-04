@@ -107,10 +107,10 @@ if sconepy.is_supported('ModelHyfydy'):
 
 # Run performance benchmarks
 if sconepy.is_supported('ModelHyfydy'):
-	measure_performance('data/H0918_hfd.scone')
+	measure_performance('SCONE_data/H0918_hfd.scone')
 
 if sconepy.is_supported('ModelOpenSim3'):
-	measure_performance('data/H0918_osim3.scone')
+	measure_performance('SCONE_data/H0918_osim3.scone')
 
 if sconepy.is_supported('ModelOpenSim4'):
-	measure_performance('data/H0918_osim4.scone')
+	measure_performance('SCONE_data/H0918_osim4.scone')
