@@ -198,12 +198,15 @@ class EMG_DATA:
         
 
     def plot_emg(self, muscle_name, start_flag, end_flag, 
-                show_raw=True, show_envelope_raw=True, 
-                show_processed=True,  # Removed show_envelope_processed
-                show_normalized=True,
-                figsize=(10, 6)):
+             show_raw=True, show_envelope_raw=True, 
+             show_processed=True,  
+             show_normalized=True,
+             additional_data=None,  
+             additional_start_flag=None,  
+             additional_end_flag=None,  
+             figsize=(10, 6)):
         """
-        Generalized EMG plotting function.
+        Generalized EMG plotting function with option to overlay additional data using dual x and y axes.
         
         :param muscle_name: Name of the muscle to plot.
         :param start_flag: Start timestamp (in seconds).
@@ -212,8 +215,22 @@ class EMG_DATA:
         :param show_envelope_raw: Whether to show envelope of raw EMG data.
         :param show_processed: Whether to show processed EMG data.
         :param show_normalized: Whether to show normalized processed EMG data.
+        :param additional_data: Optional dictionary containing additional data to plot.
+                                Example:
+                                {
+                                    'data': rheel_y_sample,
+                                    'label': 'RHeel_Y',
+                                    'color': 'blue'
+                                }
+        :param additional_start_flag: Start timestamp for additional data (in seconds).
+        :param additional_end_flag: End timestamp for additional data (in seconds).
         :param figsize: Size of the figure.
         """
+        import matplotlib.pyplot as plt
+        from scipy.signal import hilbert
+        import numpy as np
+        import pandas as pd
+
         # Validate muscle name
         if muscle_name not in self.col2index:
             raise ValueError(f"Muscle name '{muscle_name}' does not exist. Check available muscle names.")
@@ -226,82 +243,100 @@ class EMG_DATA:
         muscle_idx = self.col2index[muscle_name]
         
         # Extract raw data
-        if show_raw or show_envelope_raw:
-            raw_time = pd.to_numeric(self.our_data['Timestamp'].values)
-            raw_data = pd.to_numeric(self.our_data[muscle_name], errors='coerce').fillna(0).values
-            mask_raw = (raw_time >= start_flag) & (raw_time <= end_flag)
-            filtered_raw_time = raw_time[mask_raw]
-            filtered_raw_data = raw_data[mask_raw]
-            if show_envelope_raw:
-                envelope_raw = np.abs(hilbert(filtered_raw_data))
-        else:
-            filtered_raw_time = filtered_raw_data = envelope_raw = None
-        
-        # Extract processed data
-        if show_processed or show_normalized:
-            processed_time = self.processed_our_data[:, timestamp_idx]
-            processed_data = self.processed_our_data[:, muscle_idx]
-            mask_processed = (processed_time >= start_flag) & (processed_time <= end_flag)
-            filtered_processed_time = processed_time[mask_processed]
-            filtered_processed_data = processed_data[mask_processed]
-        else:
-            filtered_processed_time = filtered_processed_data = None
-        
-        # Extract normalized data
-        if show_normalized:
-            if self.normed_our_data is None:
-                raise ValueError("Normalized data is not available. Please ensure data is processed with normalization.")
-            normalized_time = self.normed_our_data[:, timestamp_idx]
-            normalized_data = self.normed_our_data[:, muscle_idx]
-            mask_normalized = (normalized_time >= start_flag) & (normalized_time <= end_flag)
-            filtered_normalized_time = normalized_time[mask_normalized]
-            filtered_normalized_data = normalized_data[mask_normalized]
-        else:
-            filtered_normalized_time = filtered_normalized_data = envelope_normalized = None
+        raw_time = pd.to_numeric(self.our_data['Timestamp'].values)
+        raw_data = pd.to_numeric(self.our_data[muscle_name], errors='coerce').fillna(0).values
+        mask_raw = (raw_time >= start_flag) & (raw_time <= end_flag)
+        filtered_raw_time = raw_time[mask_raw]
+        filtered_raw_data = raw_data[mask_raw]
         
         # Initialize plot
         fig, ax1 = plt.subplots(figsize=figsize)
         handles = []
         labels = []
-        
-        # Plot raw data
+
+        # Plot raw data only if show_raw is True
         if show_raw and filtered_raw_time is not None and filtered_raw_data is not None:
-            line_raw, = ax1.plot(filtered_raw_time, filtered_raw_data, label='Raw EMG Data', color='blue')
+            line_raw, = ax1.plot(filtered_raw_time, filtered_raw_data, label='Raw EMG Data', color='blue')  # Light blue
             handles.append(line_raw)
             labels.append('Raw EMG Data')
-        
-        # Plot envelope of raw data
-        if show_envelope_raw and envelope_raw is not None:
-            line_envelope_raw, = ax1.plot(filtered_raw_time, envelope_raw, 
-                                        label='Raw EMG Envelope', color='green', linestyle='dashed')
-            handles.append(line_envelope_raw)
-            labels.append('Raw EMG Envelope')
-        
-        # Plot processed data
+
+        # Extract processed data (if available)
+        processed_time = self.processed_our_data[:, timestamp_idx]  # Assuming processed data exists
+        processed_data = self.processed_our_data[:, muscle_idx]
+        mask_processed = (processed_time >= start_flag) & (processed_time <= end_flag)
+        filtered_processed_time = processed_time[mask_processed]
+        filtered_processed_data = processed_data[mask_processed]
+
+        # Plot processed data with a light red color
         if show_processed and filtered_processed_time is not None and filtered_processed_data is not None:
             line_processed, = ax1.plot(filtered_processed_time, filtered_processed_data, 
-                                        label='Processed EMG Data', color='brown')
+                                        label='Processed EMG Data', color='blue')  # Light red
             handles.append(line_processed)
             labels.append('Processed EMG Data')
         
-        ax1.set_xlabel('Timestamp (s)')
+        ax1.set_xlabel('Timestamp (EMG Data) (s)')
         ax1.set_ylabel(f'{muscle_name} EMG Data', color='blue')
         ax1.tick_params(axis='y', labelcolor='blue')
         
-        # Plot normalized data and its envelope on a secondary y-axis
+        # Extract normalized data (if available)
+        if self.normed_our_data is not None:
+            normalized_time = self.normed_our_data[:, timestamp_idx]  # Extract normalized time
+            normalized_data = self.normed_our_data[:, muscle_idx]     # Extract normalized muscle data
+            mask_normalized = (normalized_time >= start_flag) & (normalized_time <= end_flag)
+            filtered_normalized_time = normalized_time[mask_normalized]
+            filtered_normalized_data = normalized_data[mask_normalized]
+
+        # Plot normalized data
         ax2 = None
-        if (show_normalized and filtered_normalized_time is not None and filtered_normalized_data is not None) or \
-        (envelope_normalized is not None):
+        if show_normalized and filtered_normalized_time is not None and filtered_normalized_data is not None:
             ax2 = ax1.twinx()
-            if show_normalized and filtered_normalized_time is not None and filtered_normalized_data is not None:
-                line_normalized, = ax2.plot(filtered_normalized_time, filtered_normalized_data * 0.1,  # Adjusted size
-                                            label='Normalized EMG Data', color='red')
+            line_normalized, = ax2.plot(filtered_normalized_time, filtered_normalized_data * 0.1,  # Adjusted size
+                                        label='Normalized EMG Data', color='red')  # Changed color to avoid conflict
             
-            ax2.set_ylabel('Normalized Amplitude (scaled)', color='red')
-            ax2.tick_params(axis='y', labelcolor='magenta')
+            ax2.set_ylabel('Normalized Amplitude (scaled)', color='red')  # 將顏色與線條匹配
+            ax2.tick_params(axis='y', labelcolor='red')
+
+        # Plot additional data even when show_raw=False
+        if additional_data is not None:
+            additional_series = additional_data.get('data')
+            additional_label = additional_data.get('label', 'RHeel_Y')
+            additional_color = additional_data.get('color', 'saddlebrown')  # 暖褐色作為外部數據顏色
+            
+            ax4 = ax1.twinx()  # 創建副 y 軸，用於顯示外部數據
+            ax4.spines["right"].set_position(("axes", 1.1))  # 移動副 y 軸，避免與另一個 y 軸重疊
+
+            ax3 = ax1.twiny()
+
+            additional_time = pd.to_numeric(additional_series.index.values)
+            mask_additional = (additional_time >= additional_start_flag) & (additional_time <= additional_end_flag)
+            additional_time_filtered = additional_time[mask_additional]
+            additional_values = additional_series.values[mask_additional]
+            
+            # 使用 raw 的時間範圍縮放
+            additional_time_scaled = (additional_time_filtered - np.min(additional_time_filtered)) / (np.max(additional_time_filtered) - np.min(additional_time_filtered))
+            additional_time_scaled *= (np.max(filtered_raw_time) - np.min(filtered_raw_time))
+            additional_time_scaled += np.min(filtered_raw_time)
+            
+            # 顯示外部數據的幅值
+            line_additional, = ax4.plot(additional_time_scaled, additional_values, label=additional_label, color=additional_color, linestyle='-.')
+            
+            ax4.set_ylabel(f'{additional_label}', color=additional_color)
+            ax4.tick_params(axis='y', labelcolor=additional_color)  # 副 y 軸顏色與線條顏色一致
+
+            # 設置副 x 軸標籤，保留 x 軸
+            ax3.set_xlim(np.min(additional_time_filtered), np.max(additional_time_filtered))
+            ax3.set_xlabel('Timestamp (External Data) (s)', color=additional_color)
+            ax3.tick_params(axis='x', labelcolor=additional_color)
+            
+            handles.append(line_additional)
+            labels.append(additional_label)
         
-        # Set title
-        plt.title(f'{muscle_name} EMG Data (Timestamp {start_flag} to {end_flag})')
+        # Set title, check if additional_label exists
+        if additional_data is not None:
+            plt.title(f'{muscle_name} EMG Data (Timestamp {start_flag} to {end_flag}) and {additional_label}')
+        else:
+            plt.title(f'{muscle_name} EMG Data (Timestamp {start_flag} to {end_flag})')
+
         
         # Combine legends from both axes
         if ax2:
@@ -314,6 +349,7 @@ class EMG_DATA:
         fig.tight_layout()
         plt.grid(True)
         plt.show()
+
 
     def __str__(self):
         lines = [
