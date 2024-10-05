@@ -200,7 +200,7 @@ class EMG_DATA:
     def plot_emg(self, muscle_name, start_flag, end_flag, 
                 show_raw=True, show_envelope_raw=True, 
                 show_processed=True,  # Removed show_envelope_processed
-                show_normalized=True, show_envelope_normalized=True,
+                show_normalized=True,
                 figsize=(10, 6)):
         """
         Generalized EMG plotting function.
@@ -212,7 +212,6 @@ class EMG_DATA:
         :param show_envelope_raw: Whether to show envelope of raw EMG data.
         :param show_processed: Whether to show processed EMG data.
         :param show_normalized: Whether to show normalized processed EMG data.
-        :param show_envelope_normalized: Whether to show envelope of normalized EMG data.
         :param figsize: Size of the figure.
         """
         # Validate muscle name
@@ -239,7 +238,7 @@ class EMG_DATA:
             filtered_raw_time = filtered_raw_data = envelope_raw = None
         
         # Extract processed data
-        if show_processed or show_normalized or show_envelope_normalized:
+        if show_processed or show_normalized:
             processed_time = self.processed_our_data[:, timestamp_idx]
             processed_data = self.processed_our_data[:, muscle_idx]
             mask_processed = (processed_time >= start_flag) & (processed_time <= end_flag)
@@ -274,7 +273,7 @@ class EMG_DATA:
         # Plot envelope of raw data
         if show_envelope_raw and envelope_raw is not None:
             line_envelope_raw, = ax1.plot(filtered_raw_time, envelope_raw, 
-                                        label='Raw EMG Envelope', color='red', linestyle='dashed')
+                                        label='Raw EMG Envelope', color='green', linestyle='dashed')
             handles.append(line_envelope_raw)
             labels.append('Raw EMG Envelope')
         
@@ -292,13 +291,11 @@ class EMG_DATA:
         # Plot normalized data and its envelope on a secondary y-axis
         ax2 = None
         if (show_normalized and filtered_normalized_time is not None and filtered_normalized_data is not None) or \
-        (show_envelope_normalized and envelope_normalized is not None):
+        (envelope_normalized is not None):
             ax2 = ax1.twinx()
             if show_normalized and filtered_normalized_time is not None and filtered_normalized_data is not None:
                 line_normalized, = ax2.plot(filtered_normalized_time, filtered_normalized_data * 0.1,  # Adjusted size
                                             label='Normalized EMG Data', color='red')
-                handles.append(line_normalized)
-                labels.append('Normalized EMG Data')
             
             ax2.set_ylabel('Normalized Amplitude (scaled)', color='red')
             ax2.tick_params(axis='y', labelcolor='magenta')
