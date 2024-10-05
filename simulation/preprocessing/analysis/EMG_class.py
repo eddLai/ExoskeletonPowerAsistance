@@ -226,10 +226,6 @@ class EMG_DATA:
         :param additional_end_flag: End timestamp for additional data (in seconds).
         :param figsize: Size of the figure.
         """
-        import matplotlib.pyplot as plt
-        from scipy.signal import hilbert
-        import numpy as np
-        import pandas as pd
 
         # Validate muscle name
         if muscle_name not in self.col2index:

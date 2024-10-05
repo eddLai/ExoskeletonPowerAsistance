@@ -1,0 +1,26 @@
+CmaOptimizer {
+	signature_prefix = DATE_TIME
+	min_progress = 1e-4
+	
+	SimulationObjective {
+		max_duration = 10
+		
+		# Model used in simulation
+		ModelOpenSim4 {
+			#model_file = data/scale/H0914M_osim4_scaled_lock.osim
+			model_file = data/model/H0918M_ExoFreebo_Osim4.osim
+			
+			# Optimize initial state parameters
+			state_init_file = data/InitStateGait15.zml
+			initial_state_offset =	0~0.01<-0.5,0.5>
+			initial_state_offset_exclude = "*_tx;*_ty;*_u"
+			fixed_control_step_size = 0.005
+		}
+		
+		# Controller for gait, based on [Geyer & Herr 2010]
+		<< data/ControllerGH2010v9.scone >>
+		
+		# Measure for gait
+		<< data/MeasureGait15Grf15.scone >>
+	}
+}

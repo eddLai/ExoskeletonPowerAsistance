@@ -1,0 +1,79 @@
+CmaOptimizer {
+	signature_prefix = DATE_TIME
+	min_progress = 1e-4
+	
+	SimulationObjective {
+		max_duration = 20
+		
+		# Model used in simulation
+		ModelOpenSim4 {
+			model_file = model/H0918M_HipExo_osim4.osim
+			
+			# Override model properties
+			Properties {
+				glut_max_l { max_isometric_force.factor = 0.8 }
+				glut_max_r { max_isometric_force.factor = 0.8 }
+				iliopsoas_l { max_isometric_force.factor = 0.8 }
+				iliopsoas_r { max_isometric_force.factor = 0.8 }
+			}
+			
+			# Optimize initial state parameters
+			state_init_file = data/InitStateGait10.zml
+			initial_state_offset =	0~0.01<-0.5,0.5>
+			initial_state_offset_exclude = "*_tx;*_ty;*_u"
+			fixed_control_step_size = 0.005
+			integration_accuracy = 0.002
+		}
+		
+		CompositeController {
+			# Controller for gait, based on [Geyer & Herr 2010]
+			<< data/ControllerGH2010v9.scone >>
+			
+			# Mimick hyper-reflexia through F+ reflex
+			ReflexController {
+				name = HyperReflexia
+				symmetric = 1
+				
+				# MuscleReflex { source = hamstrings target = glut_max delay = 0.005 C0 = 0.05 KF = 1 }
+				# MuscleReflex { source = hamstrings target = iliopsoas delay = 0.005 C0 = 0.1 KF = 1 }
+				
+				#MuscleReflex { source = glut_max target = iliopsoas delay = 0.005 C0 = 0.10 KF = 0.3 }
+				#MuscleReflex { source = iliopsoas target = glut_max delay = 0.005 C0 = 0.10 KF = 0.3 }
+				# MuscleReflex { source = iliopsoas target = rect_fem delay = 0.005 C0 = 0.01 KF = 0.1 }
+				#MuscleReflex { source = gastroc target = iliopsoas delay = 0.005 C0 = 0.01 KF = 0.3 }
+				#MuscleReflex { source = gastroc target = glut_max delay = 0.005 C0 = 0.01 KF = 0.3 }
+				
+				#MuscleReflex { source = vasti target = iliopsoas delay = 0.005 C0 = 0.01 KF = 0.3 }
+				#MuscleReflex { source = vasti target = glut_max delay = 0.005 C0 = 0.01 KF = 0.3 }
+				
+				# MuscleReflex { source = iliopsoas target = hamstrings delay = 0.005 C0 = 0.01 KF = 0.1 }
+				# MuscleReflex { source = glut_max target = vasti delay = 0.005 C0 = 0.01 KF = 0.1 }
+				
+			}
+
+			#ScriptController {
+				#name = HipExoLeft
+				#target_act = hip_flexion_r
+				#peak_time = "0.3~0.01<0.2,0.4>"
+				#rise_time = "0.2~0.01<0.1,0.3>"
+				#duration_time = "0.2~0.01<0.1,0.3>"
+				#fall_time = "0.2~0.1<0.1,0.3>"
+				#peak_torque = "10.0~3.0<5.00,30.0>"
+				#script_file = "data/ScriptControllerHipExo.lua"
+			#}
+			#ScriptController {
+				#name = HipExoRight
+				#target_act = hip_flexion_l
+				#peak_time = "0.3~0.01<0.2,0.4>"
+				#rise_time = "0.2~0.01<0.1,0.3>"
+				#duration_time = "0.2~0.01<0.1,0.3>"
+				#fall_time = "0.2~0.1<0.1,0.3>"
+				#peak_torque = "10.0~3.0<5.00,30.0>"
+				#script_file = "data/ScriptControllerHipExo.lua"
+			#}
+		}
+		
+		# Measure for gait
+		<< data/MeasureOAGait5Grf15.scone >>
+	}
+}

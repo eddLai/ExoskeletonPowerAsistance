@@ -1,0 +1,19 @@
+# Measure for gait, minimum speed = 1.0 m/s
+CompositeMeasure {
+	MimicMeasure {
+		name = Mimic
+		weight = 1
+		file = "data/reference/0729_4.974_4.361.par.sto"
+		include_states = "*value;*speed;"
+		exclude_states = "*activation;*fiber_length"
+		time_offset = 0.2
+	}
+
+	GaitMeasure {
+		name = Gait
+		weight = 10
+		threshold = 0.05
+		termination_height = 0.75
+		min_velocity = 1.0
+	}
+}

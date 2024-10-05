@@ -1,0 +1,46 @@
+CmaOptimizer {
+	signature_prefix = DATE_TIME
+	min_progress = 1e-4
+	#init_file = "../results/220913.224454.H0918M.GH2010.SC.S15W.D20/0125_91.421_58.562.par"
+	
+	SimulationObjective {
+		max_duration = 2
+		
+		# Model used in simulation
+		ModelOpenSim4 {
+			model_file = data/model/H0918M_ExoFreebo_Osim4.osim
+			
+			# Optimize initial state parameters
+			state_init_file = data/InitStateGait10.zml
+			initial_state_offset =	0~0.01<-0.5,0.5>
+			initial_state_offset_exclude = "*_tx;*_ty;*_u"
+			fixed_control_step_size = 0.005 # larger step sizes give better performance
+			
+			enable_external_forces = 1 # Required when applying external forces
+		}
+		
+		CompositeController {
+			# Controller for gait, based on [Geyer & Herr 2010]
+			<< data/ControllerGH2010v9.scone >>
+			
+			# Script Controller for Gyroscopic Balance Device
+			ScriptController {
+				name = ExoBalance
+				target_body = torso
+				peak_time = 0.2~0.01<0.2,0.4>
+				rise_time = 0.1~0.01<0.1,0.3>
+				duration_time = 0.1~0.01<0.1,0.3>
+				fall_time = 0.1~0.1<0.01,0.3>
+				#peak_torque = 0~0.001<0,1>
+				peak_torque = 50~10.001<45,55>
+				script_file = "data/ScriptControllerBalanceDevice.lua"
+				#name = test
+				#script_file = "data/ScripTEST0810.lua"
+			}
+			
+		}
+		
+		# Measure for gait
+		<< data/MeasureGait15Grf15.scone >>
+	}
+}
