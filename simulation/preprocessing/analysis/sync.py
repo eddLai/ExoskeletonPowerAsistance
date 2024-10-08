@@ -2,6 +2,8 @@ import cv2
 import os
 import glob
 import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
 
 # 設定基礎路徑和檔案來源
 base_path = 'simulation/mocap_EMG_EEG_data/data_An_Yu/path1_09'
@@ -12,6 +14,9 @@ print(f"Looking for video files in: {video_dir}")
 video_files = glob.glob(os.path.join(video_dir, '*.mp4'))
 if len(video_files) == 0:
     raise FileNotFoundError(f"No video files found in {video_dir}")
+
+trc_file_path = glob.glob(os.path.join(base_path, 'opensim', '*.trc'))[0]
+trc_output_file_path = f'{base_path}/preprocessing/output/filtered_trc_file.trc'
 
 video_path = video_files[0]
 print(f"Found video file: {video_path}")
@@ -81,7 +86,7 @@ cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
 # 設置窗口來顯示處理過程中的幀
 cv2.namedWindow("Original Frame with Cropped Area", cv2.WINDOW_NORMAL)  # 設置窗口大小可以調整
-cv2.resizeWindow("Original Frame with Cropped Area", 1280, 960)  # 調整窗口大小為1280x960
+cv2.resizeWindow("Original Frame with Cropped Area", int(1280*3/4), int(960*3/4))  # 調整窗口大小為1280x960
 
 # 循環處理每一幀
 while cap.isOpened():
@@ -125,7 +130,7 @@ while cap.isOpened():
     cv2.imshow("Original Frame with Cropped Area", frame)
 
     # 檢查是否按下 'q' 鍵以退出
-    if cv2.waitKey(5) & 0xFF == ord('q'):
+    if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
     # 每隔 100 幀打印進度
@@ -136,3 +141,109 @@ while cap.isOpened():
 
 cap.release()
 cv2.destroyAllWindows()
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 設定參數
+time_interval = 1 / 30  # 假設每幀時間間隔為 1/30 秒 (30 fps)
+threshold_multiplier = 2  # 閾值設定為平均亮度變化的倍數
+
+def detect_flicker_start_and_end(brightness_values, time_interval, threshold_multiplier):
+    """
+    基於整體亮度的平均值自動計算閾值，檢測第一個和最後一個亮度變化超過閾值的幀號
+    :param brightness_values: 紅燈亮度的序列
+    :param time_interval: 每一幀的時間間隔
+    :param threshold_multiplier: 閾值倍率，用來乘以亮度變化的標準差
+    :return: 方波開始和結束的時間點, 對應的幀號
+    """
+    # 計算亮度信號的差分來檢測變化
+    brightness_diff = np.diff(brightness_values)
+
+    # 計算亮度差分的平均值和標準差，動態設定閾值
+    mean_brightness_diff = np.mean(np.abs(brightness_diff))
+    std_brightness_diff = np.std(np.abs(brightness_diff))
+    threshold = mean_brightness_diff + threshold_multiplier * std_brightness_diff
+    print(f"自動計算的閾值為: {threshold:.2f}")
+
+    # 找到第一個亮度變化大於設定閾值的點（開始）
+    start_index = np.argmax(np.abs(brightness_diff) > threshold)
+
+    # 找到最後一個亮度變化大於設定閾值的點（結束）
+    end_index = len(brightness_diff) - np.argmax(np.abs(brightness_diff[::-1]) > threshold) - 1
+
+    if start_index >= 0 and end_index >= 0 and start_index < end_index:
+        # 計算開始和結束的幀號和時間
+        flicker_start_frame = start_index
+        flicker_end_frame = end_index
+
+        flicker_start_time = flicker_start_frame * time_interval
+        flicker_end_time = flicker_end_frame * time_interval
+
+        print(f"紅燈開始的時間是: {flicker_start_time:.2f} 秒, 幀號: {flicker_start_frame}")
+        print(f"紅燈結束的時間是: {flicker_end_time:.2f} 秒, 幀號: {flicker_end_frame}")
+
+        return flicker_start_time, flicker_start_frame, flicker_end_time, flicker_end_frame
+    else:
+        print("未檢測到紅燈的開始或結束")
+        return None, None, None, None
+
+# 使用亮度值偵測紅燈開始和結束
+flicker_start_time, flicker_start_frame, flicker_end_time, flicker_end_frame = detect_flicker_start_and_end(brightness_values, time_interval, threshold_multiplier)
+
+# 畫圖顯示結果
+time_values = np.arange(0, len(brightness_values)) * time_interval
+plt.figure(figsize=(10, 6))
+plt.plot(time_values, brightness_values, label='Brightness Values')
+if flicker_start_time is not None and flicker_end_time is not None:
+    plt.axvline(x=flicker_start_time, color='r', linestyle='--', label=f'Start at {flicker_start_time:.2f}s (Frame {flicker_start_frame})')
+    plt.axvline(x=flicker_end_time, color='b', linestyle='--', label=f'End at {flicker_end_time:.2f}s (Frame {flicker_end_frame})')
+plt.xlabel('Time (seconds)')
+plt.ylabel('Brightness')
+plt.title('Brightness Values with Flicker Start and End Detection')
+plt.legend()
+plt.show()
+
+try:
+    trc_data = pd.read_csv(trc_file_path, sep='\t', skiprows=5, header=None)
+except pd.errors.ParserError:
+    print("pandas_error")
+    with open(trc_file_path, 'r') as file:
+        trc_data = file.read()
+
+# 讀取頭部信息的前4行
+with open(trc_file_path, 'r') as file:
+    trc_header = [next(file) for _ in range(4)]
+
+# 解析第二行和第三行的相機信息
+camera_info_header = trc_header[1].strip().split('\t')
+camera_info_values = trc_header[2].strip().split('\t')
+camera_info = dict(zip(camera_info_header, camera_info_values))
+
+# 解析第四行的標頭信息
+header_line = trc_header[3].strip().split('\t')
+cleaned_header = [col for col in header_line if col != '']
+
+# 根據標頭信息生成列名，假設每個標記都有X, Y, Z三個軸的資料
+column_names = ['Frame#', 'Time'] + [f'{marker}_{axis}' for marker in cleaned_header[2:] for axis in ['X', 'Y', 'Z']]
+
+# 讀取數據部分，跳過前5行（包含文件頭部信息）
+trc_data = pd.read_csv(trc_file_path, sep='\t', skiprows=5, header=None)
+trc_data.columns = column_names[:len(trc_data.columns)]  # 依據解析的標頭信息來設定列名
+trc_data_cut = trc_data[(trc_data['Frame#'] >= flicker_start_frame) & (trc_data['Frame#'] <= flicker_end_frame)]
+print(trc_data_cut)
+
+from EMG_class import EMG_DATA
+emg_data= EMG_DATA(base_path)
+emg_data.read_emg_file(0)
+first_event_index = emg_data.get_event_id_indices()[0]
+last_event_index = emg_data.get_event_id_indices()[-2]
+emg_data.our_data = emg_data.our_data.iloc[first_event_index:last_event_index]
+emg_data_after_first_event = emg_data.process_data(normalize=True)
+
+trc_start_time = trc_data_cut['Time'].min()
+trc_end_time = trc_data_cut['Time'].max()
+emg_start_time = emg_data_after_first_event.iloc[0]["Timestamp"]
+emg_end_time = emg_data_after_first_event.iloc[-1]["Timestamp"]
+print(f"TRC Data Time Range: {trc_start_time} to {trc_end_time}")
+print(f"EMG Data Time Range: {emg_start_time} to {emg_end_time}")
