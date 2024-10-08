@@ -204,7 +204,7 @@ class EMG_DATA:
              additional_data=None,  
              additional_start_flag=None,  
              additional_end_flag=None,  
-             figsize=(10, 6)):
+             figsize=(10, 6), save_path=None):
         """
         Generalized EMG plotting function with option to overlay additional data using dual x and y axes.
         
@@ -344,7 +344,11 @@ class EMG_DATA:
         # Optimize layout and add grid
         fig.tight_layout()
         plt.grid(True)
-        plt.show()
+        if save_path is not None:
+            plt.savefig(save_path)
+            print(f"Figure saved to {save_path}")
+        else:
+            plt.show()
 
 
     def __str__(self):

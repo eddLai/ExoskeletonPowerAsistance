@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 # 設定基礎路徑和檔案來源
-base_path = 'simulation/mocap_EMG_EEG_data/data_An_Yu/path1_09'
+base_path = 'simulation/mocap_EMG_EEG_data/data_An_Yu/path1_10'
 
 # 檢查視頻文件路徑
 video_dir = os.path.join(base_path, 'videos')
@@ -239,11 +239,42 @@ emg_data.read_emg_file(0)
 first_event_index = emg_data.get_event_id_indices()[0]
 last_event_index = emg_data.get_event_id_indices()[-2]
 emg_data.our_data = emg_data.our_data.iloc[first_event_index:last_event_index]
-emg_data_after_first_event = emg_data.process_data(normalize=True)
+emg_data_cut = emg_data.process_data(normalize=True)
 
 trc_start_time = trc_data_cut['Time'].min()
 trc_end_time = trc_data_cut['Time'].max()
-emg_start_time = emg_data_after_first_event.iloc[0]["Timestamp"]
-emg_end_time = emg_data_after_first_event.iloc[-1]["Timestamp"]
+emg_start_time = emg_data_cut.iloc[0]["Timestamp"]
+emg_end_time = emg_data_cut.iloc[-1]["Timestamp"]
 print(f"TRC Data Time Range: {trc_start_time} to {trc_end_time}")
 print(f"EMG Data Time Range: {emg_start_time} to {emg_end_time}")
+
+emg_data.save_processed_data("cutted_EMG_data")
+trc_data_cut.to_csv(trc_output_file_path, sep='\t', index=False)
+
+# 提取肌肉名稱（從第二列開始）
+muscle_names = emg_data_cut.columns[2:]
+trc_data.set_index('Time', inplace=True)
+# 準備 TRC 額外數據
+additional_data = {
+    'data': trc_data['RKnee_Y'], 
+    'label': 'RHeelY',
+    'color': 'saddlebrown'
+}
+
+# 迭代每個肌肉名稱並繪製圖表
+for muscle_name in muscle_names:
+    print(f"Processing muscle: {muscle_name}")
+    
+    emg_data.plot_emg(
+        muscle_name=muscle_name, 
+        start_flag=emg_start_time, 
+        end_flag=emg_end_time, 
+        show_raw=False,
+        show_processed=False, 
+        show_envelope_raw=False, 
+        show_normalized=True,
+        additional_start_flag=trc_start_time,
+        additional_end_flag=trc_end_time,
+        additional_data=additional_data,
+        save_path=f'{base_path}/preprocessing/sync_output{muscle_name}'
+    )
