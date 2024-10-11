@@ -346,6 +346,7 @@ class EMG_DATA:
         plt.grid(True)
         if save_path is not None:
             plt.savefig(save_path)
+            plt.close(fig)
             print(f"Figure saved to {save_path}")
         else:
             plt.show()
