@@ -37,4 +37,4 @@ class Synchronizer:
         trc_data.columns = column_names[:len(trc_data.columns)]
 
     def plot_trc_data(self):
-        
+        pass
