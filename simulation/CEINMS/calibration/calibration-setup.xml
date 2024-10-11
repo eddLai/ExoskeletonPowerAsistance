@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<ceinmsCalibration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:noNamespaceSchemaLocation="ceinmsCalibrationSetup.xsd">
+    <subjectFile>calibration/subject.xml</subjectFile>
+    <excitationGeneratorFile>excitationGenerator-16To34.xml</excitationGeneratorFile>
+    <calibrationFile>calibration/calibrationcfg.xml</calibrationFile>
+    <outputSubjectFile>output/subjectCalibrated.xml</outputSubjectFile>
+</ceinmsCalibration>
