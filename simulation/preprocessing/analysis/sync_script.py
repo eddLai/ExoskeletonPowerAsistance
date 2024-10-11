@@ -152,7 +152,16 @@ for folder in folders:
 
     # 設定參數
     time_interval = 1 / 30  # 假設每幀時間間隔為 1/30 秒 (30 fps)
-    threshold_multiplier = 2  # 閾值設定為平均亮度變化的倍數
+    threshold_multiplier = 1.3  # 閾值設定為平均亮度變化的倍數
+
+    def smooth_data(data, window_size=10):
+        """
+        使用移動平均對數據進行平滑處理
+        :param data: 原始數據
+        :param window_size: 移動平均的窗口大小
+        :return: 平滑後的數據
+        """
+        return np.convolve(data, np.ones(window_size)/window_size, mode='valid')
 
     def detect_flicker_start_and_end(brightness_values, time_interval, threshold_multiplier):
         """
@@ -192,20 +201,39 @@ for folder in folders:
         else:
             print("未檢測到紅燈的開始或結束")
             return None, None, None, None
+        
+
+    def remove_extreme_from_smoothed(smoothed_brightness_values, start_frame, end_frame):
+        """
+        從平滑後的亮度數據中去除極端值區間
+        :param smoothed_brightness_values: 平滑後的亮度數據
+        :param start_frame: 開始幀號
+        :param end_frame: 結束幀號
+        :return: 去除極端值後的亮度數據
+        """
+        # 將極端區間內的亮度數據設置為均值，或者將其刪除
+        smoothed_brightness_values[start_frame:end_frame] = np.mean(smoothed_brightness_values)
+        return smoothed_brightness_values
 
     # 使用亮度值偵測紅燈開始和結束
-    flicker_start_time, flicker_start_frame, flicker_end_time, flicker_end_frame = detect_flicker_start_and_end(brightness_values, time_interval, threshold_multiplier)
+    smoothed_brightness_values = smooth_data(brightness_values)
+    flicker_start_time, flicker_start_frame, flicker_end_time, flicker_end_frame = detect_flicker_start_and_end(smoothed_brightness_values, time_interval, threshold_multiplier)
+    smoothed_brightness_values_no_extreme = remove_extreme_from_smoothed(smoothed_brightness_values.copy(), flicker_start_frame, flicker_end_frame)
+    flicker_start_time_2, flicker_start_frame_2, flicker_end_time_2, flicker_end_frame_2 = detect_flicker_start_and_end(smoothed_brightness_values_no_extreme, time_interval, threshold_multiplier)
 
     # 畫圖顯示結果
     time_values = np.arange(0, len(brightness_values)) * time_interval
     plt.figure(figsize=(10, 6))
-    plt.plot(time_values, brightness_values, label='Brightness Values')
-    if flicker_start_time is not None and flicker_end_time is not None:
-        plt.axvline(x=flicker_start_time, color='r', linestyle='--', label=f'Start at {flicker_start_time:.2f}s (Frame {flicker_start_frame})')
-        plt.axvline(x=flicker_end_time, color='b', linestyle='--', label=f'End at {flicker_end_time:.2f}s (Frame {flicker_end_frame})')
+    plt.plot(time_values[:len(smoothed_brightness_values)], smoothed_brightness_values, label='Original Smoothed Brightness Values', linestyle='--')
+    plt.plot(time_values[:len(smoothed_brightness_values_no_extreme)], smoothed_brightness_values_no_extreme, label='Smoothed Brightness Values Without Extreme', linestyle='--')
+
+    if flicker_start_time_2 is not None and flicker_end_time_2 is not None:
+        plt.axvline(x=flicker_start_time_2, color='r', linestyle='--', label=f'Second Start at {flicker_start_time_2:.2f}s (Frame {flicker_start_frame_2})')
+        plt.axvline(x=flicker_end_time_2, color='b', linestyle='--', label=f'Second End at {flicker_end_time_2:.2f}s (Frame {flicker_end_frame_2})')
+
     plt.xlabel('Time (seconds)')
     plt.ylabel('Brightness')
-    plt.title('Brightness Values with Flicker Start and End Detection')
+    plt.title('Smoothed Brightness Values with Flicker Start and End Detection (Extreme Removed)')
     plt.legend()
     plt.show()
 
@@ -235,7 +263,7 @@ for folder in folders:
     # 讀取數據部分，跳過前5行（包含文件頭部信息）
     trc_data = pd.read_csv(trc_file_path, sep='\t', skiprows=5, header=None)
     trc_data.columns = column_names[:len(trc_data.columns)]  # 依據解析的標頭信息來設定列名
-    trc_data_cut = trc_data[(trc_data['Frame#'] >= flicker_start_frame) & (trc_data['Frame#'] <= flicker_end_frame)]
+    trc_data_cut = trc_data[(trc_data['Frame#'] >= flicker_start_frame_2) & (trc_data['Frame#'] <= flicker_end_frame_2)]
     print(trc_data_cut)
 
     from EMG_class import EMG_DATA
