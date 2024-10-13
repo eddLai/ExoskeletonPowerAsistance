@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-base_path = '/media/eddlai/DATA/ExoskeletonPowerAsistance/simulation/mocap_EMG_EEG_data/data_An_Yu'
+base_path = '/media/eddlai/DATA/ExoskeletonPowerAsistance/simulation/mocap_EMG_EEG_data_unsync/data_An_Yu'
 
 # 列出 base_path 中所有 path1_ 開頭的資料夾
 folders = [folder for folder in os.listdir(base_path) if folder.startswith('path1_') and os.path.isdir(os.path.join(base_path, folder))]
