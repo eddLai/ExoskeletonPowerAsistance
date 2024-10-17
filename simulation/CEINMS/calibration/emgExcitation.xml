@@ -1,70 +1,33 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <excitationGenerator xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:noNamespaceSchemaLocation="excitationGenerator.xsd">
-    <inputSignals type="EMG">addmag_r bicfemlh_r gaslat_r gasmed_r
-    gmax_r gmed_r gra_r perlong_r
-    recfem_r sar_r semimem_r sol_r
-    tfl_r tibant_r vaslat_r vasmed_r
-    </inputSignals>
+    <inputSignals type="EMG">
+        LGAST RGAST	LTA	RTA	LBFL RBFL LRF RRF
+    </inputSignals>  
     <mapping>
-        <excitation id="add_brev_r">
-            <input weigth="1"> addmag_r </input>
+        <excitation id="gastroc_l">
+            <input weigth="1"> LGAST </input>
         </excitation>
-        <excitation id="add_long_r">
-            <input weigth="1"> addmag_r </input>
+        <excitation id="gastroc_r">
+            <input weigth="1"> RGAST </input>
         </excitation>
-        <excitation id="glut_min1_r">
-            <input weigth="0.5"> gmed_r </input>
-            <input weigth="0.5"> gmax_r </input>
+        <excitation id="tib_ant_l">
+            <input weigth="0.5"> LTA </input>
         </excitation>
-        <excitation id="psoas_r"/>
+        <excitation id="tib_ant_r"/>
+            <input weigth="0.5"> RTA </input>
+        </excitation>
+        <excitation id="hamstrings_l"/>
+            <input weigth="0.5"> LBFL </input>
+        </excitation>
+        <excitation id="hamstrings_r"/>
+            <input weigth="0.5"> RBFL </input>
+        </excitation>
+        <excitation id="rect_fem_l"/>
+            <input weigth="0.5"> LRF </input>
+        </excitation>
+        <excitation id="rect_fem_r"/>
+            <input weigth="0.5"> RRF </input>
+        </excitation>
     </mapping>
 </excitationGenerator>
-
-<!-- <excitationGenerator>
-    <inputEMGFile>data/emg_data_with_labels.sto</inputEMGFile>
-    <filter>
-        <highpassCutoff>30</highpassCutoff>
-        <lowpassCutoff>6</lowpassCutoff>
-    </filter>
-    <mapping>
-        <muscle>tib_ant_l</muscle>
-        <emgColumn>LTA</emgColumn>
-    </mapping>
-    <mapping>
-        <muscle>gastroc_l</muscle>
-        <emgColumn>LGAST</emgColumn>
-    </mapping>
-    <mapping>
-        <muscle>vasti_l</muscle>
-        <emgColumn>LVL</emgColumn>
-    </mapping>
-    <mapping>
-        <muscle>rect_fem_l</muscle>
-        <emgColumn>LRF</emgColumn>
-    </mapping>
-    <mapping>
-        <muscle>hamstrings_l</muscle>
-        <emgColumn>LBFL</emgColumn>
-    </mapping>
-    <mapping>
-        <muscle>tib_ant_r</muscle>
-        <emgColumn>RTA</emgColumn>
-    </mapping>
-    <mapping>
-        <muscle>gastroc_r</muscle>
-        <emgColumn>RGAST</emgColumn>
-    </mapping>
-    <mapping>
-        <muscle>vasti_r</muscle>
-        <emgColumn>RVL</emgColumn>
-    </mapping>
-    <mapping>
-        <muscle>rect_fem_r</muscle>
-        <emgColumn>RRF</emgColumn>
-    </mapping>
-    <mapping>
-        <muscle>hamstrings_r</muscle>
-        <emgColumn>RBFL</emgColumn>
-    </mapping>
-</excitationGenerator> -->
