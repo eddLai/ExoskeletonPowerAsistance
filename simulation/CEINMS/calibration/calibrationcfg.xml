@@ -61,12 +61,10 @@ xsi:noNamespaceSchemaLocation="calibration.xsd">
                 <parameter>
                     <name>strengthCoefficient</name>
                     <muscleGroups>
-                        <muscles></muscles>
-                        <muscles></muscles>
-                        <muscles></muscles>
-                        <muscles></muscles>
-                        <muscles></muscles>
-                        <muscles></muscles>
+                        <muscles>tib_ant_r tib_ant_l</muscles>
+                        <muscles>gastroc_r gastroc_l</muscles>
+                        <muscles>hamstrings_r hamstrings_l</muscles>
+                        <muscles>rect_fem_r rect_fem_l</muscles>
                     </muscleGroups>
                     <absolute>
                         <range>0.5 2.5</range>

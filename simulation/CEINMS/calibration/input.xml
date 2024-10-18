@@ -1,0 +1,17 @@
+<inputData>
+    <trial>
+        <name>Trial 1</name>
+        
+        <!-- 運動學數據：關節角度變化 -->
+        <kinematicsFile>data/IK_trial1.mot</kinematicsFile>
+        
+        <!-- EMG 資料：肌肉激發信號 -->
+        <excitationFile>data/emg_trial1.sto</excitationFile>
+        
+        <!-- 模擬的時間範圍 -->
+        <startTime>0.00</startTime>
+        <endTime>10.00</endTime>
+    </trial>
+    
+    <!-- 其他試驗可以按需添加 -->
+</inputData>
