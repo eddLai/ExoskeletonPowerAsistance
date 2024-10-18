@@ -1,0 +1,138 @@
+[2024-10-09 17:18:05.100] [info] Preparing to run ScaleTool.
+[2024-10-09 17:18:05.100] [info] Processing subject Pose2Sim_scaled...
+[2024-10-09 17:18:05.100] [info] Step 1: Loading generic model
+[2024-10-09 17:18:05.122] [info] Loaded model Pose2Sim_AlphaPose from file d:\NTKCAP\Patient_data\20241009\2024_10_09\2024_10_09_17_17_calculated\Apose\opensim\Model_Pose2Sim_Halpe26.osim
+[2024-10-09 17:18:05.122] [warning] Couldn't find file 'r_pelvis.vtp'.
+[2024-10-09 17:18:05.122] [warning] Couldn't find file 'l_pelvis.vtp'.
+[2024-10-09 17:18:05.122] [warning] Couldn't find file 'sacrum.vtp'.
+[2024-10-09 17:18:05.123] [warning] Couldn't find file 'femur_r.vtp'.
+[2024-10-09 17:18:05.123] [warning] Couldn't find file 'r_patella.vtp'.
+[2024-10-09 17:18:05.123] [warning] Couldn't find file 'tibia_r.vtp'.
+[2024-10-09 17:18:05.123] [warning] Couldn't find file 'fibula_r.vtp'.
+[2024-10-09 17:18:05.123] [warning] Couldn't find file 'talus_rv.vtp'.
+[2024-10-09 17:18:05.124] [warning] Couldn't find file 'foot.vtp'.
+[2024-10-09 17:18:05.124] [warning] Couldn't find file 'bofoot.vtp'.
+[2024-10-09 17:18:05.124] [warning] Couldn't find file 'femur_l.vtp'.
+[2024-10-09 17:18:05.124] [warning] Couldn't find file 'l_patella.vtp'.
+[2024-10-09 17:18:05.124] [warning] Couldn't find file 'tibia_l.vtp'.
+[2024-10-09 17:18:05.125] [warning] Couldn't find file 'fibula_l.vtp'.
+[2024-10-09 17:18:05.125] [warning] Couldn't find file 'talus_lv.vtp'.
+[2024-10-09 17:18:05.125] [warning] Couldn't find file 'l_foot.vtp'.
+[2024-10-09 17:18:05.125] [warning] Couldn't find file 'l_bofoot.vtp'.
+[2024-10-09 17:18:05.125] [warning] Couldn't find file 'lumbar5.vtp'.
+[2024-10-09 17:18:05.125] [warning] Couldn't find file 'lumbar4.vtp'.
+[2024-10-09 17:18:05.125] [warning] Couldn't find file 'lumbar3.vtp'.
+[2024-10-09 17:18:05.126] [warning] Couldn't find file 'lumbar2.vtp'.
+[2024-10-09 17:18:05.126] [warning] Couldn't find file 'lumbar1.vtp'.
+[2024-10-09 17:18:05.126] [warning] Couldn't find file 'cerv1sm.vtp'.
+[2024-10-09 17:18:05.126] [warning] Couldn't find file 'cerv2sm.vtp'.
+[2024-10-09 17:18:05.126] [warning] Couldn't find file 'cerv3sm.vtp'.
+[2024-10-09 17:18:05.126] [warning] Couldn't find file 'cerv4sm.vtp'.
+[2024-10-09 17:18:05.126] [warning] Couldn't find file 'cerv5sm.vtp'.
+[2024-10-09 17:18:05.127] [warning] Couldn't find file 'cerv6sm.vtp'.
+[2024-10-09 17:18:05.127] [warning] Couldn't find file 'cerv7.vtp'.
+[2024-10-09 17:18:05.127] [warning] Couldn't find file 'thoracic12_s.vtp'.
+[2024-10-09 17:18:05.127] [warning] Couldn't find file 'thoracic11_s.vtp'.
+[2024-10-09 17:18:05.127] [warning] Couldn't find file 'thoracic10_s.vtp'.
+[2024-10-09 17:18:05.127] [warning] Couldn't find file 'thoracic9_s.vtp'.
+[2024-10-09 17:18:05.128] [warning] Couldn't find file 'thoracic8_s.vtp'.
+[2024-10-09 17:18:05.128] [warning] Couldn't find file 'thoracic7_s.vtp'.
+[2024-10-09 17:18:05.128] [warning] Couldn't find file 'thoracic6_s.vtp'.
+[2024-10-09 17:18:05.128] [warning] Couldn't find file 'thoracic5_s.vtp'.
+[2024-10-09 17:18:05.128] [warning] Couldn't find file 'thoracic4_s.vtp'.
+[2024-10-09 17:18:05.129] [warning] Couldn't find file 'thoracic3_s.vtp'.
+[2024-10-09 17:18:05.129] [warning] Couldn't find file 'thoracic2_s.vtp'.
+[2024-10-09 17:18:05.129] [warning] Couldn't find file 'thoracic1_s.vtp'.
+[2024-10-09 17:18:05.129] [warning] Couldn't find file 'hat_ribs_scap.vtp'.
+[2024-10-09 17:18:05.130] [warning] Couldn't find file 'hat_jaw.vtp'.
+[2024-10-09 17:18:05.130] [warning] Couldn't find file 'hat_skull.vtp'.
+[2024-10-09 17:18:05.130] [warning] Couldn't find file 'humerus_rv.vtp'.
+[2024-10-09 17:18:05.130] [warning] Couldn't find file 'ulna_rv.vtp'.
+[2024-10-09 17:18:05.130] [warning] Couldn't find file 'radius_rv.vtp'.
+[2024-10-09 17:18:05.131] [warning] Couldn't find file 'pisiform_rvs.vtp'.
+[2024-10-09 17:18:05.131] [warning] Couldn't find file 'lunate_rvs.vtp'.
+[2024-10-09 17:18:05.131] [warning] Couldn't find file 'scaphoid_rvs.vtp'.
+[2024-10-09 17:18:05.131] [warning] Couldn't find file 'triquetrum_rvs.vtp'.
+[2024-10-09 17:18:05.131] [warning] Couldn't find file 'hamate_rvs.vtp'.
+[2024-10-09 17:18:05.131] [warning] Couldn't find file 'capitate_rvs.vtp'.
+[2024-10-09 17:18:05.132] [warning] Couldn't find file 'trapezoid_rvs.vtp'.
+[2024-10-09 17:18:05.132] [warning] Couldn't find file 'trapezium_rvs.vtp'.
+[2024-10-09 17:18:05.132] [warning] Couldn't find file 'metacarpal2_rvs.vtp'.
+[2024-10-09 17:18:05.132] [warning] Couldn't find file 'index_proximal_rvs.vtp'.
+[2024-10-09 17:18:05.132] [warning] Couldn't find file 'index_medial_rvs.vtp'.
+[2024-10-09 17:18:05.133] [warning] Couldn't find file 'index_distal_rvs.vtp'.
+[2024-10-09 17:18:05.133] [warning] Couldn't find file 'metacarpal3_rvs.vtp'.
+[2024-10-09 17:18:05.133] [warning] Couldn't find file 'middle_proximal_rvs.vtp'.
+[2024-10-09 17:18:05.133] [warning] Couldn't find file 'middle_medial_rvs.vtp'.
+[2024-10-09 17:18:05.133] [warning] Couldn't find file 'middle_distal_rvs.vtp'.
+[2024-10-09 17:18:05.134] [warning] Couldn't find file 'metacarpal4_rvs.vtp'.
+[2024-10-09 17:18:05.134] [warning] Couldn't find file 'ring_proximal_rvs.vtp'.
+[2024-10-09 17:18:05.134] [warning] Couldn't find file 'ring_medial_rvs.vtp'.
+[2024-10-09 17:18:05.134] [warning] Couldn't find file 'ring_distal_rvs.vtp'.
+[2024-10-09 17:18:05.134] [warning] Couldn't find file 'metacarpal5_rvs.vtp'.
+[2024-10-09 17:18:05.134] [warning] Couldn't find file 'little_proximal_rvs.vtp'.
+[2024-10-09 17:18:05.134] [warning] Couldn't find file 'little_medial_rvs.vtp'.
+[2024-10-09 17:18:05.135] [warning] Couldn't find file 'little_distal_rvs.vtp'.
+[2024-10-09 17:18:05.135] [warning] Couldn't find file 'metacarpal1_rvs.vtp'.
+[2024-10-09 17:18:05.135] [warning] Couldn't find file 'thumb_proximal_rvs.vtp'.
+[2024-10-09 17:18:05.135] [warning] Couldn't find file 'thumb_distal_rvs.vtp'.
+[2024-10-09 17:18:05.135] [warning] Couldn't find file 'humerus_lv.vtp'.
+[2024-10-09 17:18:05.135] [warning] Couldn't find file 'ulna_lv.vtp'.
+[2024-10-09 17:18:05.135] [warning] Couldn't find file 'radius_lv.vtp'.
+[2024-10-09 17:18:05.136] [warning] Couldn't find file 'pisiform_lvs.vtp'.
+[2024-10-09 17:18:05.136] [warning] Couldn't find file 'lunate_lvs.vtp'.
+[2024-10-09 17:18:05.136] [warning] Couldn't find file 'scaphoid_lvs.vtp'.
+[2024-10-09 17:18:05.136] [warning] Couldn't find file 'triquetrum_lvs.vtp'.
+[2024-10-09 17:18:05.136] [warning] Couldn't find file 'hamate_lvs.vtp'.
+[2024-10-09 17:18:05.136] [warning] Couldn't find file 'capitate_lvs.vtp'.
+[2024-10-09 17:18:05.136] [warning] Couldn't find file 'trapezoid_lvs.vtp'.
+[2024-10-09 17:18:05.137] [warning] Couldn't find file 'trapezium_lvs.vtp'.
+[2024-10-09 17:18:05.137] [warning] Couldn't find file 'metacarpal2_lvs.vtp'.
+[2024-10-09 17:18:05.137] [warning] Couldn't find file 'index_proximal_lvs.vtp'.
+[2024-10-09 17:18:05.137] [warning] Couldn't find file 'index_medial_lvs.vtp'.
+[2024-10-09 17:18:05.137] [warning] Couldn't find file 'index_distal_lvs.vtp'.
+[2024-10-09 17:18:05.137] [warning] Couldn't find file 'metacarpal3_lvs.vtp'.
+[2024-10-09 17:18:05.138] [warning] Couldn't find file 'middle_proximal_lvs.vtp'.
+[2024-10-09 17:18:05.138] [warning] Couldn't find file 'middle_medial_lvs.vtp'.
+[2024-10-09 17:18:05.138] [warning] Couldn't find file 'middle_distal_lvs.vtp'.
+[2024-10-09 17:18:05.138] [warning] Couldn't find file 'metacarpal4_lvs.vtp'.
+[2024-10-09 17:18:05.138] [warning] Couldn't find file 'ring_proximal_lvs.vtp'.
+[2024-10-09 17:18:05.138] [warning] Couldn't find file 'ring_medial_lvs.vtp'.
+[2024-10-09 17:18:05.138] [warning] Couldn't find file 'ring_distal_lvs.vtp'.
+[2024-10-09 17:18:05.139] [warning] Couldn't find file 'metacarpal5_lvs.vtp'.
+[2024-10-09 17:18:05.139] [warning] Couldn't find file 'little_proximal_lvs.vtp'.
+[2024-10-09 17:18:05.139] [warning] Couldn't find file 'little_medial_lvs.vtp'.
+[2024-10-09 17:18:05.139] [warning] Couldn't find file 'little_distal_lvs.vtp'.
+[2024-10-09 17:18:05.139] [warning] Couldn't find file 'metacarpal1_lvs.vtp'.
+[2024-10-09 17:18:05.139] [warning] Couldn't find file 'thumb_proximal_lvs.vtp'.
+[2024-10-09 17:18:05.139] [warning] Couldn't find file 'thumb_distal_lvs.vtp'.
+[2024-10-09 17:18:05.154] [info] Step 2: Scaling generic model
+[2024-10-09 17:18:05.167] [info] Loaded marker file Empty_project_filt_0-30.trc (22 markers, 49 frames)
+[2024-10-09 17:18:05.168] [info] Measurement 'torso'
+[2024-10-09 17:18:05.168] [info] 	pair 0 (LShoulder, LHip): model = 0.553062, experimental = 0.561947
+[2024-10-09 17:18:05.168] [info] 	pair 1 (RShoulder, RHip): model = 0.553062, experimental = 0.563634
+[2024-10-09 17:18:05.168] [info] 	overall scale factor = 1.01759
+[2024-10-09 17:18:05.168] [info] Measurement 'arm'
+[2024-10-09 17:18:05.168] [info] 	pair 0 (LShoulder, LElbow): model = 0.269526, experimental = 0.250903
+[2024-10-09 17:18:05.168] [info] 	pair 1 (RShoulder, RElbow): model = 0.269526, experimental = 0.255097
+[2024-10-09 17:18:05.169] [info] 	overall scale factor = 0.938683
+[2024-10-09 17:18:05.169] [info] Measurement 'forearm'
+[2024-10-09 17:18:05.169] [info] 	pair 0 (LElbow, LWrist): model = 0.237488, experimental = 0.254104
+[2024-10-09 17:18:05.169] [info] 	pair 1 (RElbow, RWrist): model = 0.237488, experimental = 0.259366
+[2024-10-09 17:18:05.169] [info] 	overall scale factor = 1.08104
+[2024-10-09 17:18:05.169] [info] Measurement 'thigh'
+[2024-10-09 17:18:05.169] [info] 	pair 0 (LHip, LKnee): model = 0.371469, experimental = 0.372353
+[2024-10-09 17:18:05.169] [info] 	pair 1 (RHip, RKnee): model = 0.371469, experimental = 0.369625
+[2024-10-09 17:18:05.169] [info] 	overall scale factor = 0.998708
+[2024-10-09 17:18:05.169] [info] Measurement 'shank'
+[2024-10-09 17:18:05.170] [info] 	pair 0 (LKnee, LAnkle): model = 0.388261, experimental = 0.385832
+[2024-10-09 17:18:05.170] [info] 	pair 1 (RKnee, RAnkle): model = 0.388261, experimental = 0.385988
+[2024-10-09 17:18:05.170] [info] 	overall scale factor = 0.993943
+[2024-10-09 17:18:05.170] [info] Measurement 'foot'
+[2024-10-09 17:18:05.170] [info] 	pair 0 (LHeel, LBigToe): model = 0.230688, experimental = 0.224366
+[2024-10-09 17:18:05.170] [info] 	pair 1 (RHeel, RBigToe): model = 0.230688, experimental = 0.219539
+[2024-10-09 17:18:05.170] [info] 	overall scale factor = 0.962131
+[2024-10-09 17:18:05.170] [info] Measurement 'pelvis'
+[2024-10-09 17:18:05.170] [info] 	pair 0 (RHip, LHip): model = 0.210813, experimental = 0.183603
+[2024-10-09 17:18:05.171] [info] 	overall scale factor = 0.870930
+[2024-10-09 17:18:05.198] [info] Wrote model file 'Model_Pose2Sim_Halpe26_scaled.osim' from model.
