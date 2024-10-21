@@ -2,32 +2,32 @@
 <excitationGenerator xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:noNamespaceSchemaLocation="excitationGenerator.xsd">
     <inputSignals type="EMG">
-        LGAST RGAST	LTA	RTA	LBFL RBFL LRF RRF
+        gastroc_l.activation gastroc_r.activation	tib_ant_l.activation	tib_ant_l.activation	hamstrings_l.activation hamstrings_r.activation rect_fem_l.activation rect_fem_r.activation
     </inputSignals>  
     <mapping>
         <excitation id="gastroc_l">
-            <input weigth="1"> LGAST </input>
+            <input weigth="1"> gastroc_l.activation </input>
         </excitation>
         <excitation id="gastroc_r">
-            <input weigth="1"> RGAST </input>
+            <input weigth="1"> gastroc_r.activation </input>
         </excitation>
         <excitation id="tib_ant_l">
-            <input weigth="0.5"> LTA </input>
+            <input weigth="1"> tib_ant_l.activation </input>
         </excitation>
         <excitation id="tib_ant_r"/>
-            <input weigth="0.5"> RTA </input>
+            <input weigth="1"> tib_ant_r.activation </input>
         </excitation>
         <excitation id="hamstrings_l"/>
-            <input weigth="0.5"> LBFL </input>
+            <input weigth="1"> hamstrings_l.activation </input>
         </excitation>
         <excitation id="hamstrings_r"/>
-            <input weigth="0.5"> RBFL </input>
+            <input weigth="1"> hamstrings_r.activation </input>
         </excitation>
         <excitation id="rect_fem_l"/>
-            <input weigth="0.5"> LRF </input>
+            <input weigth="1"> rect_fem_l.activation </input>
         </excitation>
         <excitation id="rect_fem_r"/>
-            <input weigth="0.5"> RRF </input>
+            <input weigth="1"> rect_fem_r.activation </input>
         </excitation>
     </mapping>
 </excitationGenerator>

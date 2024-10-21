@@ -1,17 +1,37 @@
-<inputData>
-    <trial>
-        <name>Trial 1</name>
-        
-        <!-- 運動學數據：關節角度變化 -->
-        <kinematicsFile>data/IK_trial1.mot</kinematicsFile>
-        
-        <!-- EMG 資料：肌肉激發信號 -->
-        <excitationFile>data/emg_trial1.sto</excitationFile>
-        
-        <!-- 模擬的時間範圍 -->
-        <startTime>0.00</startTime>
-        <endTime>10.00</endTime>
-    </trial>
-    
-    <!-- 其他試驗可以按需添加 -->
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<inputData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:noNamespaceSchemaLocation="inputData.xsd">
+    <muscleTendonLengthFile>
+        data/TendonLength.sto
+    </muscleTendonLengthFile>
+    <excitationsFile>data/emg_cut.sto</excitationsFile>
+    <momentArmsFiles>
+        <momentArmsFile dofName="ankle_angle_l">
+            data/MomentArm_ankle_angle_l.sto
+        </momentArmsFile>
+        <momentArmsFile dofName="ankle_angle_r">
+            data/MomentArm_ankle_angle_r.sto
+        </momentArmsFile>
+        <momentArmsFile dofName="hip_flexion_l">
+            data/MomentArm_hip_flexion_l.sto
+        </momentArmsFile>
+        <momentArmsFile dofName="hip_flexion_r">
+            data/MomentArm_hip_flexion_r.sto
+        </momentArmsFile>
+        <momentArmsFile dofName="knee_angle_l">
+            data/MomentArm_knee_angle_l.sto
+        </momentArmsFile>
+        <momentArmsFile dofName="knee_angle_r">
+            data/MomentArm_knee_angle_r.sto
+        </momentArmsFile>
+        <momentArmsFile dofName="pelvis_tilt">
+            data/MomentArm_pelvis_tilt.sto
+        </momentArmsFile>
+        <momentArmsFile dofName="pelvis_tx">
+            data/MomentArm_pelvis_tx.sto
+        </momentArmsFile>
+        <momentArmsFile dofName="pelvis_ty">
+            data/MomentArm_pelvis_ty.sto
+        </momentArmsFile>
+    </momentArmsFiles>
 </inputData>

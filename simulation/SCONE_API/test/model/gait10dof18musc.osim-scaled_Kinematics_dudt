@@ -1,0 +1,15 @@
+Accelerations
+version=1
+nRows=4
+nColumns=11
+inDegrees=no
+
+Units are S.I. units (second, meters, Newtons, ...)
+If the header above contains a line with 'inDegrees', this indicates whether rotational values are in degrees (yes) or radians (no).
+
+endheader
+time	pelvis_tilt	pelvis_tx	pelvis_ty	hip_flexion_r	knee_angle_r	ankle_angle_r	hip_flexion_l	knee_angle_l	ankle_angle_l	lumbar_extension
+     12.03333333	   4600.20518850	     98.01906022	    276.63974777	  -3398.50941976	  -4857.14741046	   2230.86389759	  -3535.68058754	  -5027.88394219	   5366.10509548	  -5581.83480802
+     12.06666667	   4420.48977750	     89.54687450	    264.48831187	  -3191.06853054	  -4864.50433136	   2215.09436451	  -3374.98907353	  -4911.38145814	   4927.48023270	  -5372.42139418
+     12.10000000	   4174.50854171	     76.67740792	    246.79676672	  -2908.93529479	  -4867.45410944	   2098.81626247	  -3150.35893200	  -4757.19998137	   4348.14585951	  -5088.35040651
+     12.13333333	   3887.15544288	     61.91694666	    225.93475705	  -2638.74958803	  -4690.74791928	   1887.20564954	  -2878.03828859	  -4604.38039544	   3756.26743020	  -4754.62300139

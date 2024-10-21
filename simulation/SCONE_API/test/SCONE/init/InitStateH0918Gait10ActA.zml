@@ -1,0 +1,42 @@
+values {
+	pelvis_tilt = -0.46237876
+	pelvis_tx = -2.74476504
+	pelvis_ty = 0.85942456
+	hip_flexion_r = 0.31941103
+	knee_angle_r = -0.24925522	
+	ankle_angle_r = 0.41714160 
+	hip_flexion_l = 0.96825877
+	knee_angle_l = -0.43996236	
+	ankle_angle_l = 0.02189022
+}
+velocities {
+	pelvis_tilt = 0.13062363
+	pelvis_tx = 0.65510215
+	pelvis_ty =  -0.04204094
+	hip_flexion_r = -0.96105411	 
+	knee_angle_r =  0.11713422
+	ankle_angle_r = -0.51276369	
+	hip_flexion_l = -0.25678964
+	knee_angle_l = -0.47643549	
+	ankle_angle_l = 0.58941623
+}
+activations {
+	hamstrings_r = 0.01068191
+	bifemsh_r = 0.02808447
+	glut_max_r = 0.01156240
+	iliopsoas_r = 0.82070036
+	rect_fem_r = 0.50598728
+	vasti_r = 0.08001672
+	gastroc_r = 0.02567491
+	soleus_r = 0.03068694
+	tib_ant_r = 0.03308860
+	hamstrings_l = 0.98785881
+	bifemsh_l = 0.04482757
+	glut_max_l = 0.61793695	
+	iliopsoas_l = 0.01124002
+	rect_fem_l = 0.01147601	
+	vasti_l = 0.01306540
+	gastroc_l = 0.06953869	
+	soleus_l = 0.02850030
+	tib_ant_l = 0.03360902
+}
