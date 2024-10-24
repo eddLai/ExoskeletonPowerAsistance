@@ -7,31 +7,31 @@ xsi:noNamespaceSchemaLocation="inputData.xsd">
     <excitationsFile>data/emg_cut.sto</excitationsFile>
     <momentArmsFiles>
         <momentArmsFile dofName="ankle_angle_l">
-            data/MomentArm_ankle_angle_l.sto
+            data/MuscleAnalysis/MomentArm_ankle_angle_l.sto
         </momentArmsFile>
         <momentArmsFile dofName="ankle_angle_r">
-            data/MomentArm_ankle_angle_r.sto
+            data/MuscleAnalysis/MomentArm_ankle_angle_r.sto
         </momentArmsFile>
         <momentArmsFile dofName="hip_flexion_l">
-            data/MomentArm_hip_flexion_l.sto
+            data/MuscleAnalysis/MomentArm_hip_flexion_l.sto
         </momentArmsFile>
         <momentArmsFile dofName="hip_flexion_r">
-            data/MomentArm_hip_flexion_r.sto
+            data/MuscleAnalysis/MomentArm_hip_flexion_r.sto
         </momentArmsFile>
         <momentArmsFile dofName="knee_angle_l">
-            data/MomentArm_knee_angle_l.sto
+            data/MuscleAnalysis/MomentArm_knee_angle_l.sto
         </momentArmsFile>
         <momentArmsFile dofName="knee_angle_r">
-            data/MomentArm_knee_angle_r.sto
+            data/MuscleAnalysis/MomentArm_knee_angle_r.sto
         </momentArmsFile>
         <momentArmsFile dofName="pelvis_tilt">
-            data/MomentArm_pelvis_tilt.sto
+            data/MuscleAnalysis/MomentArm_pelvis_tilt.sto
         </momentArmsFile>
         <momentArmsFile dofName="pelvis_tx">
-            data/MomentArm_pelvis_tx.sto
+            data/MuscleAnalysis/MomentArm_pelvis_tx.sto
         </momentArmsFile>
         <momentArmsFile dofName="pelvis_ty">
-            data/MomentArm_pelvis_ty.sto
+            data/MuscleAnalysis/MomentArm_pelvis_ty.sto
         </momentArmsFile>
     </momentArmsFiles>
 </inputData>

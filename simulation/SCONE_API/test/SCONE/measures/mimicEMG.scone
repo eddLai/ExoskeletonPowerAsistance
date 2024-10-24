@@ -1,0 +1,6 @@
+MimicMeasure {
+    name = Mimic
+    weight = 100
+    file = data/emg_cut.sto
+    include_states = "*.activation"
+}

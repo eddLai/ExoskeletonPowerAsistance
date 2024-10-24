@@ -3,6 +3,6 @@
 xsi:noNamespaceSchemaLocation="ceinmsCalibrationSetup.xsd">
     <subjectFile>calibration/subject.xml</subjectFile>
     <excitationGeneratorFile>calibration/emgExcitation.xml</excitationGeneratorFile>
-    <!-- <calibrationFile>calibration/calibrationCfg.xml</calibrationFile> -->
+    <calibrationFile>calibration/calibrationCfg.xml</calibrationFile>
     <outputSubjectFile>output/subjectCalibrated.xml</outputSubjectFile>
 </ceinmsCalibration>

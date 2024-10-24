@@ -273,9 +273,8 @@ xsi:noNamespaceSchemaLocation="subject.xsd">
     </dofSet>
 
     <calibrationInfo>
-        <calibrated>
-            <startSubjectFile>subject</startSubjectFile>
-            <calibrationSequence/>
-        </calibrated>
+        <uncalibrated>
+         <subjectID>test</subjectID>
+      </uncalibrated>
     </calibrationInfo>
 </subject>

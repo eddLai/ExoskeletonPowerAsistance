@@ -23,11 +23,12 @@ CmaOptimizer {
 		
 		# Measure for gait
 		CompositeMeasure {
-			#<< measures/Gait10.scone >>
+			<< measures/Gait10.scone >>
 			<< measures/EffortWangCubed2000.scone >>
 			<< measures/DofKnee1.scone >>
-			<< measures/Grf14.scone >>
-			<< measures/mimicMeasure.scone >>
+			#<< measures/Grf14.scone >>
+			<< measures/mimicDof.scone >>
+			#<< measures/mimicEMG.scone >>
 		}
 	}
 }
